@@ -21,6 +21,8 @@ interface FormData {
   compagnie: string;
   room: string;
   date: string;
+  dateDebut?: string;
+  dateFin?: string;
   pays: {
     CODE: string;
     NOM: string;
@@ -111,7 +113,7 @@ function Formulaire() {
   const handleSubmit = () => {
     if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone ||
       !formData.destination || !formData.budget || !formData.hotel || !formData.compagnie ||
-      !formData.room || !formData.dateDebut || !formData.dateFin) {
+      !formData.room ) {
       return (
         Swal.fire({
           position: "top",
