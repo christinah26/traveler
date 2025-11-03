@@ -1,8 +1,9 @@
 import React, { useContext, useState } from "react";
 import { User, Lock, Eye, EyeOff, LogIn } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import Retour from "../components/retour";
 // @ts-ignore
+import {ArrowLeft } from 'lucide-react';
+import "../components/popup.css"
 import Logo from "../assets/traveler-nobg.png";
 import Swal from "sweetalert2";
 import { login } from "../api/Auth";
@@ -71,6 +72,29 @@ export default function Login() {
             });
         }
     };
+
+   const handleRetour = () => {
+      Swal.fire({
+         text: "Voulez-vous vraiment quiiter cette page ?",
+         icon: "question",
+         iconColor: "#ffff",
+         showCancelButton: true,
+         confirmButtonText: "Oui",
+         cancelButtonText: "Non",
+         reverseButtons: true,
+         customClass: {
+           popup: "custom-popup",
+           confirmButton: "custom-confirm-button",
+           cancelButton: "custom-cancel-button",
+         }
+       }).then((result) =>{
+         if (result.isConfirmed) {
+           navigate('/');
+         } else if (result.dismiss === "cancel") {
+           window.close();
+         }
+       });
+     }; 
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-400 via-cyan-300 to-blue-200 py-12 px-4">
@@ -152,15 +176,21 @@ export default function Login() {
                         </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                            <Retour />
-
-                            <button
-                                type="button"
-                                onClick={async () => {
-                                    const status = await handleSubmit();
-                                }}
-                                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl"
-                            >
+                        <button
+                            type="button"
+                            onClick={handleRetour}
+                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                            <ArrowLeft className="w-5 h-5" />
+                            Retour
+                        </button>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                            const status = await handleSubmit();
+                            }}
+                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl"
+                        >
                                 <LogIn className="w-5 h-5" />
                                 Se connecter
                             </button>

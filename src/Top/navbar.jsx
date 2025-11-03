@@ -47,7 +47,7 @@ function Header() {
             <>
               <li><SearchBar /></li>
               <li><Link to="/" className="hover:text-purple-600 hover:scale-110 transition-all duration-300">Accueil</Link></li>
-              <li><Link to="/home" className="hover:text-purple-600 hover:scale-110 transition-all duration-300">mon espace</Link></li>
+              <li><Link to="/home" className="hover:text-purple-600 hover:scale-110 transition-all duration-300">Mon espace</Link></li>
               <li><Link to="/pages/destinations" className="hover:text-purple-600 hover:scale-110 transition-all duration-300">Destinations</Link></li>
               <li><Link to="/pages/hotels" className="hover:text-purple-600 hover:scale-110 transition-all duration-300">Hôtels</Link></li>
               <li><Link to="/pages/chambres" className="hover:text-purple-600 hover:scale-110 transition-all duration-300">Chambres</Link></li>

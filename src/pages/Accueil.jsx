@@ -21,22 +21,6 @@ function Accueil() {
                 </FadeIn>
 
                 <main className="flex-grow">
-                    <FadeIn>
-                        {/* Destinations */}
-                        <SectionList
-                            id="destinations-section"
-                            title="Destinations Populaires"
-                            sousTitre="Découvrez nos destinations les plus prisées à travers le monde"
-                            data={destinationsData}
-                            buttonLink="/pages/destinations"
-                            buttonText="Explorer toutes les destinations"
-                            options={{
-                                showImage: true,
-                                showPrice: true,
-                                showReserve: true,
-                            }}
-                        />
-                    </FadeIn>
 
                     <FadeIn>
                         {/* Hotels */}
@@ -50,22 +34,6 @@ function Accueil() {
                                 showStars: true,
                                 showImage: true,
                                 showPrice: true,
-                                showReserve: true,
-                            }}
-                        />
-                    </FadeIn>
-
-                    {/* Chambres */}
-                    <FadeIn>
-                        <SectionList
-                            title="Nos Chambres"
-                            sousTitre="Des chambres confortables adaptées à tous vos besoins"
-                            data={ChambreData}
-                            buttonLink="/pages/chambres"
-                            buttonText="Voir toutes les chambres"
-                            options={{
-                                showPrice: true,
-                                showImage: true,
                                 showReserve: true,
                             }}
                         />
