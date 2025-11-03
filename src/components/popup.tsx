@@ -56,7 +56,7 @@ const Popup: React.FC<{ token: string }> = ({ token }: { token: string }) => {
             },
         }).then((result) => {
             if (result.isConfirmed) {
-                navigate("/login");
+                navigate("../login");
             } else if (result.dismiss === "cancel") {
                 handleRetour();
             }

@@ -19,7 +19,11 @@ import { signup } from "../api/Auth";
 import { useNavigate } from "react-router-dom";
 import { AuthContext, useAuth } from "../contexts/AuthContext";
 
-function Signin() {
+function Signin({
+    setIsAuthenticated,
+}: {
+    setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const { setToken } = useAuth();
@@ -74,6 +78,7 @@ function Signin() {
             });
             setToken(data.token);
             context.setId ? context.setId(data.id) : null;
+            setIsAuthenticated(true);
 
             if (data.status === 200) {
                 Swal.fire({
@@ -90,7 +95,7 @@ function Signin() {
                     },
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        navigate("/");
+                        navigate("/home");
                     }
                 });
 
@@ -154,94 +159,99 @@ function Signin() {
                             <Home size={17} />
                             <span>Pays de résidence</span>
                         </div>
-                <div>
                         <div>
-                            <select
-                                className="p-2 border-2 border-gray-200 rounded-xl w-1/2 my-5 focus:ring focus:ring-blue-200"
-                                value={formData.pays?.CODE}
-                                onChange={(e) => {
-                                    setFormData({
-                                        ...formData,
-                                        pays: {
-                                            CODE: pays.find(
-                                                (c) => c.CODE === e.target.value
-                                            )!.CODE,
-                                            NOM: pays.find(
-                                                (c) => c.CODE === e.target.value
-                                            )!.NOM,
-                                        },
-                                    });
-                                }}
+                            <div>
+                                <select
+                                    className="p-2 border-2 border-gray-200 rounded-xl w-1/2 my-5 focus:ring focus:ring-blue-200"
+                                    value={formData.pays?.CODE}
+                                    onChange={(e) => {
+                                        setFormData({
+                                            ...formData,
+                                            pays: {
+                                                CODE: pays.find(
+                                                    (c) =>
+                                                        c.CODE ===
+                                                        e.target.value
+                                                )!.CODE,
+                                                NOM: pays.find(
+                                                    (c) =>
+                                                        c.CODE ===
+                                                        e.target.value
+                                                )!.NOM,
+                                            },
+                                        });
+                                    }}
+                                >
+                                    {pays.map((p) => (
+                                        <option key={p.CODE} value={p.CODE}>
+                                            {p.NOM}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label
+                            htmlFor="password"
+                            className="block text-sm font-semibold text-gray-700 mb-2"
+                        >
+                            <Lock className="inline w-4 h-4 mr-1" /> Mot de
+                            passe *
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                id="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                placeholder="Minimum 6 caractères"
+                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors pr-12"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                             >
-                                {pays.map((p) => (
-                                    <option key={p.CODE} value={p.CODE}>
-                                        {p.NOM}
-                                    </option>
-                                ))}
-                            </select>
+                                {showPassword ? (
+                                    <EyeOff className="w-5 h-5" />
+                                ) : (
+                                    <Eye className="w-5 h-5" />
+                                )}
+                            </button>
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Le mot de passe doit contenir au moins 6
+                                caractères
+                            </p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                            <Retour />
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    await handleSubmit();
+                                }}
+                                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl"
+                            >
+                                <UserPlus className="w-5 h-5" /> S'inscrire
+                            </button>
+                        </div>
+                        <div className="text-center mt-6">
+                            <p className="text-white">
+                                Vous avez déjà un compte ?{" "}
+                                <a
+                                    href="/login"
+                                    className="font-bold text-white hover:text-blue-100 underline"
+                                >
+                                    Se connecter
+                                </a>
+                            </p>
                         </div>
                     </div>
                 </div>
-                <div>
-                    <label
-                        htmlFor="password"
-                        className="block text-sm font-semibold text-gray-700 mb-2"
-                    >
-                        <Lock className="inline w-4 h-4 mr-1" /> Mot de passe *
-                    </label>
-                    <div className="relative">
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            id="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            placeholder="Minimum 6 caractères"
-                            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors pr-12"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                        >
-                            {showPassword ? (
-                                <EyeOff className="w-5 h-5" />
-                            ) : (
-                                <Eye className="w-5 h-5" />
-                            )}
-                        </button>
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Le mot de passe doit contenir au moins 6 caractères
-                        </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        <Retour />
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                const status = await handleSubmit();
-                                if (status === 200) navigate("/");
-                            }}
-                            className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg hover:shadow-xl"
-                        >
-                            <UserPlus className="w-5 h-5" /> S'inscrire
-                        </button>
-                    </div>
-                    <div className="text-center mt-6">
-                        <p className="text-white">
-                            Vous avez déjà un compte ?{" "}
-                            <a
-                                href="/login"
-                                className="font-bold text-white hover:text-blue-100 underline"
-                            >
-                                Se connecter
-                            </a>
-                        </p>
-                    </div>
-                </div>
-            </div>
             </div>
             <div className="text-center mt-6">
                 <p className="text-white">

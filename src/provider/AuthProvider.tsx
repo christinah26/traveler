@@ -2,29 +2,28 @@ import React, { useState } from "react";
 import TokenAPI from "../api/TokenAPI";
 import { AuthContext } from "../contexts/AuthContext";
 
-const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [token, setToken] = useState<string | null>(null);
-    const [id, setId] = useState<number | null>(null);
-    const refreshToken = async (): Promise<string | null> => {
-        const refresh = localStorage.getItem("refreshToken");
-        if (!refresh) return null;
-
-        try {
-            const data = await TokenAPI(refresh);
-
-            setToken(data?.accessToken);
-            setId(data?.id);
-
-            return data?.accessToken;
-        } catch (err) {
-            setToken(null);
-            return null;
-        }
+const AuthProvider = ({
+    children,
+    props,
+}: {
+    children: React.ReactNode;
+    props: {
+        token: string | null;
+        setToken: React.Dispatch<React.SetStateAction<string | null>>;
+        refreshToken: () => Promise<string | null>;
+        id: number | null;
+        setId: React.Dispatch<React.SetStateAction<number | null>>;
     };
-
+}) => {
     return (
         <AuthContext.Provider
-            value={{ token: token, setToken, refreshToken, id, setId }}
+            value={{
+                token: props.token,
+                setToken: props.setToken,
+                refreshToken: props.refreshToken,
+                id: props.id,
+                setId: props.setId,
+            }}
         >
             {children}
         </AuthContext.Provider>

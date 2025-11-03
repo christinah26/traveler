@@ -3,10 +3,12 @@ import { Plane, Mail, ArrowLeft, Send, CheckCircle } from "lucide-react";
 import Retour from "../components/retour";
 // @ts-ignore
 import Logo from "../assets/traveler-nobg.png";
+import { useNavigate } from "react-router-dom";
 
 function ForgotPassword() {
     const [email, setEmail] = useState("");
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = () => {
         // Validation
@@ -156,7 +158,7 @@ function ForgotPassword() {
                     <p className="text-white text-sm">
                         Vous vous souvenez de votre mot de passe ?{" "}
                         <a
-                            href="/login"
+                            onClick={() => navigate("/login")}
                             className="font-bold text-white hover:text-blue-100 underline"
                         >
                             Se connecter
