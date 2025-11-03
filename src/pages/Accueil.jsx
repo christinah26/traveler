@@ -2,15 +2,13 @@ import Navbar from "../Top/navbar.jsx";
 import Footer from "../Top/footer";
 import Header from "../Top/header.jsx";
 import SectionList from "../Section/SectionList.jsx";
-import destinationsData from "../Data/DestinationData.jsx";
 import aeroData from "../Data/aeroData.jsx";
 import hotelsData from "../Data/HotelData.jsx";
-import ChambreData from "../Data/ChambreData.jsx";
 import Contact from "../Section/contact.jsx";
 import FadeIn from "../components/fadeIn.jsx";
 import AvisSection from "../Section/AvisSection.jsx";
-
-
+import { useAuth } from "../contexts/AuthContext.jsx";
+import getHotels from "../api/Hotels.ts"; 
 function Accueil() {
     return (
         <>
@@ -35,6 +33,7 @@ function Accueil() {
                                 showImage: true,
                                 showPrice: true,
                                 showReserve: true,
+                                showCategorie:true,
                             }}
                         />
                     </FadeIn>
@@ -52,6 +51,7 @@ function Accueil() {
                                 showImage: true,
                                 showPrice: false,
                                 showReserve: true,
+                                showCategorie : false,
                             }}
                         />
                     </FadeIn>

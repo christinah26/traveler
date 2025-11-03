@@ -23,8 +23,11 @@ export default function SectionList({ title, sousTitre, data, buttonLink, button
             nom={item.nom}
             image={item.image}
             desc={item.desc}
+            pays={item.pays}
+            ville={item.ville}
+            categorie={item.categorie_chambre}
             prix={item.prix}
-            etoiles={item.etoiles}
+            etoiles={item.nb_etoiles}
             date={item.date}
             type={item.type}
             {...options}

@@ -10,15 +10,20 @@ import ChambreData from "../Data/ChambreData.jsx";
 import Contact from "../Section/contact.jsx";
 import Retour from "../components/retour.tsx";
 import pays from "../Data/pays.json"; 
+import {useAuth} from "../contexts/AuthContext.jsx";
+import getHotels from "../api/Hotels.ts";
+
+
 
 export default function Pages() {
   const { pageType } = useParams();
+  const { token } = useAuth(); 
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const [data, setData] = useState([]);
   const [visible, setVisible] = useState(3);
-  const [selectedCategory, setSelectedCategory] = useState("Toutes");
-
+ 
   const [selectedCountry, setSelectedCountry] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -29,17 +34,28 @@ export default function Pages() {
   const budgetFilter = storedData.budget ? parseFloat(storedData.budget) : null;
 
   useEffect(() => {
-    if (pageType === "destinations") setData(DestinationData);
-    else if (pageType === "hotels") setData(HotelsData);
-    else if (pageType === "compagnies") setData(AeroData);
-    else if (pageType === "chambres") setData(ChambreData);
-    else setData([]);
-    setVisible(3);
-    setSelectedCategory("Toutes");
-    setSelectedCountry("");
-    setSelectedCity("");
-    setSearchTerm("");
-  }, [pageType]);
+    if (pageType !== "hotels") return;
+
+    const fetchHotels = async () => {
+      if (!token) {
+        alert("Veuillez vous connecter");
+        return;
+      }
+
+      setLoading(true);
+      const result = await getHotels(token, selectedCountry || "France");
+
+      if (result && result.hotels) {
+        setData(result.hotels.map(h => ({ ...h, type: "hotel" })));
+      } else {
+        setData([]);
+        console.log("Aucun hôtel ou erreur :", result);
+      }
+      setLoading(false);
+    };
+
+    fetchHotels();
+  }, [pageType, token, selectedCountry]);
 
   // villes du pays choisi
   const villes = pays.find((p) => p.NOM === selectedCountry)?.VILLE || [];
@@ -59,11 +75,6 @@ export default function Pages() {
       valid = false;
     }
 
-    
-    if (pageType === "chambres" && selectedCategory !== "Toutes") {
-      valid = valid && item.categorie === selectedCategory;
-    }
-
    
     if (selectedCity && item.ville) {
       valid = valid && item.ville.toLowerCase() === selectedCity.toLowerCase();
@@ -78,24 +89,13 @@ export default function Pages() {
   });
 
   const titles = {
-    destinations: "Nos Destinations",
+  
     hotels: "Nos Hôtels",
     compagnies: "Nos Compagnies Aériennes",
-    chambres: "Nos Chambres Disponibles",
+  
   };
 
-  const categories = [
-    "Toutes",
-    "Standard",
-    "Deluxe",
-    "Familiale",
-    "Suite",
-    "Supérieure",
-    "Présidentielle",
-    "Simple",
-    "Double",
-    "Triple",
-  ];
+ 
 
   const handleCardClick = (type, nom) => {
     const currentData = JSON.parse(localStorage.getItem("formData")) || {};
@@ -148,25 +148,6 @@ export default function Pages() {
               placeholder="Rechercher un nom..."
               className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none w-full md:w-64"
             />
-          </div>
-        )}
-
-        {/* ---  Filtre pour les chambres--- */}
-        {pageType === "chambres" && (
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-full ${
-                  selectedCategory === cat
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
           </div>
         )}
 
