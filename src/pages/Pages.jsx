@@ -3,16 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../Top/navbar.jsx";
 import Footer from "../Top/footer.jsx";
 import Card from "../cards/Card.jsx";
-import HotelsData from "../Data/HotelData.jsx";
-import DestinationData from "../Data/DestinationData.jsx";
-import AeroData from "../Data/aeroData.jsx";
-import ChambreData from "../Data/ChambreData.jsx";
 import Contact from "../Section/contact.jsx";
 import Retour from "../components/retour.tsx";
 import pays from "../Data/pays.json"; 
 import {useAuth} from "../contexts/AuthContext.jsx";
 import getHotels from "../api/Hotels.ts";
-
+import getAirlines from "../api/Airlines.ts";
 
 
 export default function Pages() {
@@ -34,28 +30,45 @@ export default function Pages() {
   const budgetFilter = storedData.budget ? parseFloat(storedData.budget) : null;
 
   useEffect(() => {
-    if (pageType !== "hotels") return;
-
-    const fetchHotels = async () => {
+    if (pageType !== "hotels" && pageType !== "compagnies") return;
+  
+    const fetchData = async () => {
       if (!token) {
         alert("Veuillez vous connecter");
         return;
       }
-
+  
       setLoading(true);
-      const result = await getHotels(token, selectedCountry || "France");
-
-      if (result && result.hotels) {
-        setData(result.hotels.map(h => ({ ...h, type: "hotel" })));
-      } else {
+      try {
+        if (pageType === "hotels") {
+          const result = await getHotels(token, selectedCountry || "France");
+          if (result && result.hotels) {
+            setData(result.hotels.map(h => ({ ...h, type: "hotel" })));
+          } else {
+            setData([]);
+          }
+        } else if (pageType === "compagnies") {
+          const result = await getAirlines(token);
+          // adapte selon le format : result.airlines ou result
+          if (result?.airlines) {
+            setData(result.airlines.map(a => ({ ...a, type: "compagnie" })));
+          } else if (Array.isArray(result)) {
+            setData(result.map(a => ({ ...a, type: "compagnie" })));
+          } else {
+            setData([]);
+          }
+        }
+      } catch (err) {
+        console.error("Erreur fetch pages :", err);
         setData([]);
-        console.log("Aucun hôtel ou erreur :", result);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-
-    fetchHotels();
+  
+    fetchData();
   }, [pageType, token, selectedCountry]);
+  
 
   // villes du pays choisi
   const villes = pays.find((p) => p.NOM === selectedCountry)?.VILLE || [];
@@ -111,6 +124,7 @@ export default function Pages() {
     navigate("/formulaire");
   };
 
+  console.log(filteredData);
   return (
     <div>
       <Navbar />
@@ -161,7 +175,7 @@ export default function Pages() {
                 showImage={!!item.image}
                 showPrice={!!item.prix}
                 showReserve
-                showStars={!!item.etoiles}
+                showStars={!!item.nb_etoiles}
                 showDate={!!item.date}
                 onReserve={() => handleCardClick(item.type, item.nom)}
               />
