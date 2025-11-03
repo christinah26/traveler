@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import Navbar from "../Top/navbar.jsx";
 import Footer from "../Top/footer.jsx";
 import Card from "../cards/Card.jsx";
 import Contact from "../Section/contact.jsx";
