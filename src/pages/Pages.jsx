@@ -143,9 +143,7 @@ export default function Pages() {
 
     useEffect(() => {
         const fetchAirlines = async () => {
-            const data = await getAirlines(
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTAxNywiaWF0IjoxNzYyMjkxNzY3LCJleHAiOjE3NjIyOTI2Njd9.alDpTnS67kZJO609bmT2CyDCLpzjNsJAhkH4KG8wEJk"
-            );
+            const data = await getAirlines(token);
             setAirlines(data);
             console.log("====================================");
             console.log(data);
