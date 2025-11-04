@@ -6,6 +6,7 @@ export default async function TokenAPI(refreshToken: string) {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "69420",
             },
             body: JSON.stringify({ refreshToken }),
         });

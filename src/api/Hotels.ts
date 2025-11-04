@@ -8,6 +8,7 @@ export default async function getHotels(token: string, pays: string) {
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "69420",
             },
             body: JSON.stringify({ pays }),
         });

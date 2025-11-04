@@ -139,6 +139,21 @@ export default function Pages() {
         navigate("/formulaire");
     };
 
+    const [airlines, setAirlines] = useState(undefined);
+
+    useEffect(() => {
+        const fetchAirlines = async () => {
+            const data = await getAirlines(
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTAxNywiaWF0IjoxNzYyMjkxNzY3LCJleHAiOjE3NjIyOTI2Njd9.alDpTnS67kZJO609bmT2CyDCLpzjNsJAhkH4KG8wEJk"
+            );
+            setAirlines(data);
+            console.log("====================================");
+            console.log(data);
+            console.log("====================================");
+        };
+        fetchAirlines();
+    }, []);
+
     console.log(filteredData);
     return (
         <div>

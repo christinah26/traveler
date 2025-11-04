@@ -8,11 +8,6 @@ const NavbarProvider = ({
     children: React.ReactNode;
     isAuthenticated: boolean;
 }) => {
-    useEffect(() => {
-        console.log("====================================");
-        console.log(isAuthenticated);
-        console.log("====================================");
-    }, [isAuthenticated]);
     return (
         <NavbarContext.Provider value={{ isAuthenticated }}>
             {children}

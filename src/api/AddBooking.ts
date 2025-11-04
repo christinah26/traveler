@@ -15,6 +15,7 @@ export default async function getBookings(
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "69420",
             },
             body: JSON.stringify({
                 num_vol,
