@@ -65,7 +65,7 @@ function AvisSection(){
               : "Les retours de nos passagers sur nos compagnies partenaires"
           }
           data={data}
-          buttonLink="/avis"
+          buttonLink="/login"
           buttonText="Donner votre avis ★"
           options={{ showStars: true, showDate: true }}
        

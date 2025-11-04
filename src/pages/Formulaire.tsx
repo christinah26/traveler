@@ -1,150 +1,122 @@
-// import { useLocation } from 'react-router-dom';
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Logo from "../assets/traveler-nobg.png";
 import Field from "../components/champ";
-import Date from "../components/date";
 import Retour from "../components/retour";
-import { Hotel, Mail, MapPin, Phone, Plane, Send, UserPen, X, Coins, Bed, Calendar } from "lucide-react";
-import Swal from "sweetalert2";
-import "../components/popup";
-import pays from '../utils/pays';
+import { Hotel, MapPin, Plane, Send, X, Calendar } from "lucide-react";
+import pays from "../utils/pays";
+import createBooking from "../api/AddBooking";
+import { useAuth } from "../contexts/AuthContext"; 
 
 interface FormData {
-  nom: string;
-  prenom: string;
-  email: string;
-  telephone: string;
   destination: string;
-  budget: string;
   hotel: string;
   compagnie: string;
-  room: string;
   date: string;
-  dateDebut?: string;
-  dateFin?: string;
   pays: {
     CODE: string;
     NOM: string;
   };
 }
 
-function Formulaire() {
+export default function Formulaire() {
+  
+
   const navigate = useNavigate();
+  const { token  } = useAuth(); 
+  const isAuthenticated = !!token;
 
-  //  données du localStorage en récupération
   const storedData = JSON.parse(localStorage.getItem("formData") || "{}");
-
   const [formData, setFormData] = useState<FormData>({
-    nom: '',
-    prenom: '',
-    email: '',
-    telephone: '',
-    destination: storedData.destination || '',
-    budget: storedData.budget || '',
-    hotel: storedData.hotel || '',
-    compagnie: storedData.compagnie || '',
-    room: 'standard',
-    date: '',
-    pays: {
-      CODE: "AD",
-      NOM: "Andorre",
-    },
+    destination: storedData.destination || "",
+    hotel: storedData.hotel || "",
+    compagnie: storedData.compagnie || "",
+    date: "",
+    pays: { CODE: "AD", NOM: "Andorre" },
   });
 
-  // Mise à jour du localStorage quand les données changent
   useEffect(() => {
-    localStorage.setItem("formData", JSON.stringify({
-      destination: formData.destination,
-      budget: formData.budget,
-      hotel: formData.hotel,
-      compagnie: formData.compagnie
-    }));
-  }, [formData.destination, formData.budget, formData.hotel, formData.compagnie]);
+    localStorage.setItem(
+      "formData",
+      JSON.stringify({
+        destination: formData.destination,
+        hotel: formData.hotel,
+        compagnie: formData.compagnie,
+      })
+    );
+  }, [formData.destination, formData.hotel, formData.compagnie]);
+
+  const resetHotel = () => setFormData((prev) => ({ ...prev, hotel: "" }));
+  const resetCompagnie = () => setFormData((prev) => ({ ...prev, compagnie: "" }));
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleHotelSelect = () => {
-    if (!formData.destination || !formData.budget) {
-      Swal.fire({
-        position: "top",
-        icon: "warning",
-        iconColor: "#ffff",
-        text: "Veuillez d'abord choisir une destination et un budget.",
-        confirmButtonText: "OK",
-        customClass: {
-          popup: "custom-popup",
-          confirmButton: "custom-confirm-button"
-        }
-      });
+  const handleHotelSelect = () => navigate("/pages/hotels");
+  const handleCompagnieSelect = () => navigate("/pages/compagnies");
+
+  const handleSubmit = async () => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+    console.log("🔍 Token:", token);
+    console.log("👤 User:", user);
+
+    if (!token || !user?.id) {
+      console.log("Non connecté. Redirection vers login...");
+      navigate("/login");
       return;
     }
-    navigate("/pages/hotels");
-  };
 
-  const handleCompagnieSelect = () => {
-    if (!formData.destination || !formData.budget) {
-      Swal.fire({
-        position: "top",
-        icon: "warning",
-        iconColor: "#ffff",
-        text: "Veuillez d'abord choisir une destination et un budget.",
-        confirmButtonText: "OK",
-        customClass: {
-          popup: "custom-popup",
-          confirmButton: "custom-confirm-button"
-        }
-      });
+    if (!formData.destination || !formData.hotel || !formData.compagnie || !formData.date) {
+      console.log("Champs obligatoires manquants !");
       return;
     }
-    navigate("/pages/compagnies");
-  };
 
-  const resetHotel = () => {
-    setFormData(prev => ({ ...prev, hotel: '' }));
-  };
+    const selectedHotel = JSON.parse(localStorage.getItem("selectedHotel") || "{}");
+    const selectedFlight = JSON.parse(localStorage.getItem("selectedFlight") || "{}");
 
-  const resetCompagnie = () => {
-    setFormData(prev => ({ ...prev, compagnie: '' }));
-  };
+    console.log("🏨 Hotel:", selectedHotel);
+    console.log("✈️ Vol:", selectedFlight);
 
-  const handleSubmit = () => {
-    if (!formData.nom || !formData.prenom || !formData.email || !formData.telephone ||
-      !formData.destination || !formData.budget || !formData.hotel || !formData.compagnie ||
-      !formData.room ) {
-      return (
-        Swal.fire({
-          position: "top",
-          icon: "warning",
-          iconColor: "#ffff",
-          text: "Veuillez remplir tous les champs obligatoires",
-          confirmButtonText: "OK",
-          customClass: {
-            popup: "custom-popup",
-            confirmButton: "custom-confirm-button"
-          }
-        })
+    if (!selectedHotel?.num_chambre || !selectedFlight?.num_vol) {
+      console.log("Réservation incomplète");
+      return;
+    }
+
+    const num_vol = selectedFlight.num_vol;
+    const num_vol_retourner = selectedFlight.num_vol_retourner || 0;
+    const num_chambre = selectedHotel.num_chambre;
+    const id_client = user.id;
+    const code = "IND";
+
+    try {
+      console.log("📡 Envoi réservation...", { num_vol, num_vol_retourner, num_chambre, id_client, code });
+      
+      const response = await createBooking(
+        token, 
+        num_vol,
+        num_vol_retourner,
+        num_chambre,
+        id_client,
+        code
       );
-    }
-    Swal.fire({
-      text: "Votre demande de réservation a été envoyée avec succès !",
-      icon: "success",
-      iconColor: "#ffff",
-      confirmButtonText: "OK",
-      allowEscapeKey: false,
-      allowOutsideClick: false,
-      customClass: {
-        popup: "custom-popup",
-        confirmButton: "custom-confirm-button",
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
+
+      console.log("📦 Réponse:", response);
+
+      if (response && response.success) {
+        console.log("Réservation créée avec succès !");
         localStorage.removeItem("formData");
-        navigate("/");
+        localStorage.removeItem("selectedHotel");
+        localStorage.removeItem("selectedFlight");
+        navigate("/home");
+      } else {
+        console.log("Erreur lors de la réservation:", response?.message);
       }
-    });
+    } catch (error) {
+      console.error("Erreur lors de la réservation:", error);
+    }
   };
 
   return (
@@ -160,60 +132,40 @@ function Formulaire() {
 
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           <div className="space-y-6">
-            {/* Nom et Prénom */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="Nom" icon={UserPen} id="nom" name="nom" value={formData.nom} onChange={handleChange} placeholder="Votre nom" />
-              <Field label="Prénom" icon={UserPen} id="prenom" name="prenom" value={formData.prenom} onChange={handleChange} placeholder="Votre prénom" />
-            </div>
-
-            {/* Email et Téléphone */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Field label="E-Mail" icon={Mail} id="email" name="email" value={formData.email} onChange={handleChange} placeholder="exemple@gmail.com" />
-              <Field label="Téléphone" icon={Phone} id="telephone" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="+261 XX XXX XX" />
-            </div>
-
-            {/* Destination et Budget */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* <Field label="Destination" icon={MapPin} id="destination" name="destination" value={formData.destination} onChange={handleChange} placeholder="Destination choisie" /> */}
               <div>
-                <label htmlFor="room" className="block text-sm font-semibold text-gray-700 mb-2">
-                  <MapPin className="inline w-4 h-4 mr-1"/>Destination *</label>
+                <label htmlFor="destination" className="block text-sm font-semibold text-gray-700 mb-2">
+                  <MapPin className="inline w-4 h-4 mr-1" />
+                  Destination *
+                </label>
                 <select
+                  name="destination"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
                   value={formData.pays?.CODE}
                   onChange={(e) => {
-                      setFormData({
-                          ...formData,
-                          pays: {
-                              CODE: pays.find(
-                                  (c) => c.CODE === e.target.value
-                              )!.CODE,
-                              NOM: pays.find(
-                                  (c) => c.CODE === e.target.value
-                              )!.NOM,
-                          },
-                      });
+                    const selected = pays.find((c) => c.CODE === e.target.value);
+                    if (selected) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        pays: { CODE: selected.CODE, NOM: selected.NOM },
+                      }));
+                    }
                   }}
                 >
                   {pays.map((p) => (
-                      <option key={p.CODE} value={p.CODE}>
-                          {p.NOM}
-                      </option>
+                    <option key={p.CODE} value={p.CODE}>
+                      {p.NOM}
+                    </option>
                   ))}
                 </select>
               </div>
-              
-              <Field label="Budget (€)" icon={Coins} id="budget" name="budget" type="number" value={formData.budget} onChange={handleChange} placeholder="Votre budget" />
-            </div>
 
-            {/* Hôtel et Compagnie */}
-            {formData.budget && (
               <div className="space-y-4">
-                {/* Hôtel */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Hotel className="inline w-4 h-4 mr-1"/>
-                    Hôtel choisi *</label>
+                    <Hotel className="inline w-4 h-4 mr-1" />
+                    Hôtel choisi *
+                  </label>
                   {formData.hotel ? (
                     <div className="flex items-center gap-3">
                       <input
@@ -236,17 +188,16 @@ function Formulaire() {
                       type="button"
                       className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      {/* <Hotel size={20} /> */}
                       Choisir un hôtel
                     </button>
                   )}
                 </div>
 
-                {/* Compagnie aérienne */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <Plane className="inline w-4 h-4 mr-1"/>
-                    Compagnie aérienne choisie *</label>
+                    <Plane className="inline w-4 h-4 mr-1" />
+                    Compagnie aérienne choisie *
+                  </label>
                   {formData.compagnie ? (
                     <div className="flex items-center gap-3">
                       <input
@@ -269,43 +220,24 @@ function Formulaire() {
                       type="button"
                       className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      {/* <Plane size={20} /> */}
-                      Choisir une compagnie aérienne
+                      Choisir une compagnie
                     </button>
                   )}
                 </div>
               </div>
-            )}
-
-            {/* Type de chambre */}
-            <div>
-              <label htmlFor="room" className="block text-sm font-semibold text-gray-700 mb-2">
-                <Bed className="inline w-4 h-4 mr-1"/>
-                Type de chambre *</label>
-              <select
-                name="room"
-                id="room"
-                value={formData.room}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
-              >
-                <option value="standard">Standard</option>
-                <option value="superieur">Supérieur</option>
-                <option value="deluxe">Deluxe</option>
-                <option value="suite">Suite</option>
-                <option value="présidentielle">Présidentielle</option>
-                <option value="simple">Simple</option>
-                <option value="double">Double</option>
-                <option value="triple">Triple</option>
-                <option value="familiale">Familiale</option>
-              </select>
             </div>
 
-            {/* Dates */}
-            {/* <Date dateDebut={formData.dateDebut} dateFin={formData.dateFin} onChange={handleChange} /> */}
-            <Field label="Durée du séjour" icon={Calendar} id="date" name="date" type="number" value={formData.date} onChange={handleChange} placeholder="Jours de séjour" />
+            <Field
+              label="Durée du séjour"
+              icon={Calendar}
+              id="date"
+              name="date"
+              type="number"
+              value={formData.date}
+              onChange={handleChange}
+              placeholder="Jours de séjour"
+            />
 
-            {/* Boutons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Retour />
               <button
@@ -319,10 +251,10 @@ function Formulaire() {
           </div>
         </div>
 
-        <p className="text-center text-white text-sm mt-6">* Tous les champs sont obligatoires</p>
+        <p className="text-center text-white text-sm mt-6">
+          * Tous les champs sont obligatoires
+        </p>
       </div>
     </div>
   );
 }
-
-export default Formulaire;
