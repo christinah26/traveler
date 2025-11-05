@@ -1,7 +1,7 @@
 import url from "./url";
 
 // Pour créer une réservation
-export default async function getBookings(
+export default async function createBookings(
     token: string,
     num_vol: number,
     num_vol_retourner: number,

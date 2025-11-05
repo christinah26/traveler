@@ -20,6 +20,13 @@ export default function Card({
   showDate = false,
   showdesc = false,
   showCategorie = false,
+  onReserve = null,
+  id,
+  num_chambre,
+  num_vol,
+  num_vol_retourner,
+  id_hotel,
+  id_vol,
 }) {
     const { token } = useAuth();
     const navigate = useNavigate();
@@ -27,8 +34,33 @@ export default function Card({
     const handleReserve = () => {
         if (!token) {
             navigate("/login");
+            return;
+        }
+
+        // Si onReserve est passé, utilise-le (depuis Pages.jsx)
+        if (onReserve) {
+            const itemData = {
+                type,
+                id,
+                nom,
+                image,
+                desc,
+                pays,
+                ville,
+                categorie_chambre,
+                prix,
+                nb_etoiles,
+                date,
+                num_chambre,
+                num_vol,
+                num_vol_retourner,
+                id_hotel,
+                id_vol,
+            };
+            console.log("📤 Appel onReserve avec item:", itemData);
+            onReserve(itemData);
         } else {
-            // Sauvegarde dans localStorage
+            // Fallback si onReserve n'est pas passé
             const currentData = JSON.parse(localStorage.getItem("formData")) || {};
             
             if (type === "hotel") currentData.hotel = nom;
@@ -38,9 +70,6 @@ export default function Card({
             navigate("/formulaire");
         }
     };
-
-   
-
 
     return (
         <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col transition-transform duration-300 hover:scale-105 hover:shadow-xl">

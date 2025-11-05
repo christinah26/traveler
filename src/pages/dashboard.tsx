@@ -49,22 +49,22 @@ function Dashboard() {
   const [stats, setStats] = useState({ totalReservations: 0, reservationsActives: 0 });
   const [chartData, setChartData] = useState<any[]>([]);
 
-  // 🔥 Charger user
+  
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     console.log("👤 User:", user);
     setUserInfo(user);
   }, []);
 
-  // 🔥 Fetch bookings
+ 
   useEffect(() => {
     const fetchBookings = async () => {
       console.log("🔍 Token:", token);
       
-      // 🔥 SI PAS DE TOKEN, on arrête le loading et on affiche "pas de réservations"
+      //  SI PAS DE TOKEN, on arrête le loading et on affiche "pas de réservations"
       if (!token) {
         console.log("⚠️ Pas de token, skip fetch");
-        setLoading(false); // 🔥 IMPORTANT : Arrêter le loading !
+        setLoading(false);
         return;
       }
 
@@ -110,7 +110,7 @@ function Dashboard() {
         console.error("❌ Erreur API bookings:", err);
         setReservations([]);
       } finally {
-        setLoading(false); // 🔥 TOUJOURS arrêter le loading
+        setLoading(false);
       }
     };
 

@@ -13,7 +13,7 @@ export default async function rating(
     }
 ) {
     try {
-        const response = await fetch(url + "bookings/add", {
+        const response = await fetch(url + "rating", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

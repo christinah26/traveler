@@ -11,6 +11,8 @@ import getAirlines from "../api/Airlines.ts";
 import { NavbarContext } from "../contexts/NavbarContext.tsx";
 import Header from "../Top/navbar.jsx";
 
+
+
 export default function Pages() {
     const { pageType } = useParams();
     const { token } = useAuth();
@@ -26,35 +28,53 @@ export default function Pages() {
     const storedData = JSON.parse(localStorage.getItem("formData")) || {};
     const destinationFilter = storedData.destination || null;
     const budgetFilter = storedData.budget ? parseFloat(storedData.budget) : null;
+    const volType = storedData.volType; 
+    const paysDepart = storedData.paysDepart;
+    const paysArrivee = storedData.paysArrivee;
 
     
-    const mapHotelData = (hotel) => ({
-        id: hotel.id_hotel || hotel.id || Math.random(),
-        nom: hotel.nom || "Sans nom",
-        image: hotel.image || "",
-        desc: hotel.description || hotel.desc || "",
-        pays: hotel.pays || "",
-        ville: hotel.ville || "",
-        categorie_chambre: hotel.categorie_chambre  || "",
-        prix: hotel.prix || 0,
-        nb_etoiles: hotel.nb_etoile || hotel.nb_etoiles|| 0,
-        type: "hotel", 
-    });
+    const mapHotelData = (hotel, index) => {
+        const stableId = hotel.id_hotel || hotel.id || `hotel_${index}_${hotel.nom}`;
+        
+        return {
+            id: stableId,
+            num_chambre: hotel.id_hotel || hotel.id || hotel.num_chambre || stableId,
+            nom: hotel.nom || "Sans nom",
+            image: hotel.image || "",
+            desc: hotel.description || hotel.desc || "",
+            pays: hotel.pays || "",
+            ville: hotel.ville || "",
+            categorie_chambre: hotel.categorie_chambre  || "",
+            prix: hotel.prix || 0,
+            nb_etoiles: hotel.nb_etoile || hotel.nb_etoiles|| 0,
+            type: "hotel", 
+        };
+    };
 
-    const mapAirlineData = (airline) => ({
-        id: airline.id_compagnie || airline.id || Math.random(),
-        nom: airline.nom || "Sans nom",
-        image: airline.logo || airline.image || "",
-        desc: airline.description || airline.desc || "",
-        pays: airline.pays || "",
-        ville: airline.ville || "",
-        date: airline.date || "",
-        prix: airline.prix || "",
-        nb_etoiles: airline.nb_etoiles || airline.rating || 0,
-        type: "compagnie", 
-        num_vol: airline.num_vol || airline.flight_id || 0,
-        num_vol_retourner: airline.num_vol_retourner || airline.return_flight_id || 0
-    });
+    const mapAirlineData = (airline, index) => {
+     
+        const nameHash = airline.nom.split('').reduce((a, b) => {
+            a = ((a << 5) - a) + b.charCodeAt(0);
+            return a & a; 
+        }, 0);
+        
+        const stableId = Math.abs(nameHash) || (index + 1);
+        
+        return {
+            id: `airline_${index}`,
+            num_vol: stableId,
+            num_vol_retourner: 0,
+            nom: airline.nom || "Sans nom",
+            image: airline.logo || airline.image || "",
+            desc: airline.description || airline.desc || "",
+            pays: airline.pays || "",
+            ville: airline.ville || "",
+            date: airline.date || "",
+            prix: airline.prix || "",
+            nb_etoiles: airline.nb_etoiles || airline.rating || 0,
+            type: "compagnie", 
+        };
+    };
 
     
     useEffect(() => {
@@ -72,28 +92,44 @@ export default function Pages() {
                 if (pageType === "hotels") {
                     console.log(" Fetching hotels pour:", selectedCountry);
                     const result = await getHotels(token, selectedCountry || "France");
-                    console.log(" Hotels:", result);
+                    console.log(" Hotels bruts:", result);
 
                     let hotelsArray = [];
                     if (result?.hotels) hotelsArray = result.hotels;
                     else if (Array.isArray(result)) hotelsArray = result;
                     else if (result?.data) hotelsArray = result.data;
 
-                    const mapped = hotelsArray.map(mapHotelData);
+                    const mapped = hotelsArray.map((hotel, index) => mapHotelData(hotel, index));
                     console.log(" Hotels mappés:", mapped);
                     setData(mapped);
 
                 } else if (pageType === "compagnies") {
                     console.log("Fetching airlines");
                     const result = await getAirlines(token , selectedCountry);
-                    console.log(" Airlines:", result);
+                    console.log(" Airlines brutes:", result);
+                    
+                 
+                    if (Array.isArray(result) && result[0]) {
+                        console.log("🔍 Première airline (détail):", result[0]);
+                        console.log("🔍 Clés de la première airline:", Object.keys(result[0]));
+                        console.log("🔍 Valeurs:", JSON.stringify(result[0], null, 2));
+                        console.log("🔍 Entrée complète:", result[0]);
+                    } else if (result?.airlines && result.airlines[0]) {
+                        console.log("🔍 Première airline (détail):", result.airlines[0]);
+                        console.log("🔍 Clés de la première airline:", Object.keys(result.airlines[0]));
+                        console.log("🔍 Valeurs:", JSON.stringify(result.airlines[0], null, 2));
+                        console.log("🔍 Entrée complète:", result.airlines[0]);
+                    }
+                    
+                  
+                    console.log("🔍 Premiers 5 airlines:", result.slice ? result.slice(0, 5) : result?.airlines?.slice(0, 5));
                     
                     let airlinesArray = [];
                     if (result?.airlines) airlinesArray = result.airlines;
                     else if (Array.isArray(result)) airlinesArray = result;
                     else if (result?.data) airlinesArray = result.data;
 
-                    const mapped = airlinesArray.map(mapAirlineData);
+                    const mapped = airlinesArray.map((airline, index) => mapAirlineData(airline, index));
                     console.log(" Airlines mappées:", mapped);
                     setData(mapped);
                 }
@@ -134,35 +170,66 @@ export default function Pages() {
 
   
     const handleCardClick = (item) => {
-        console.log("Click:", item);
+        console.log("====== 🖱️ CLICK SUR CARTE ======");
+        console.log("🖱️ Item cliqué COMPLET:", item);
+        console.log("📊 Type de l'item:", item.type);
+        console.log("📊 volType:", volType);
         
         const currentData = JSON.parse(localStorage.getItem("formData")) || {};
 
         if (item.type === "hotel") {
-            currentData.hotel = item.nom;
-            localStorage.setItem("selectedHotel", JSON.stringify({
-                num_chambre: item.num_chambre,
+            console.log("🏨 Type = hotel détecté");
+            
+            const hotelData = {
+                num_chambre: item.num_chambre || item.id,
+                id_hotel: item.id_hotel || item.id || item.num_chambre,
                 categorie_chambre: item.categorie_chambre,
                 nom: item.nom,
                 prix: item.prix,
                 ville: item.ville
-            }));
+            };
+            
+            console.log("💾 Sauvegarde hôtel:", hotelData);
+            currentData.hotel = item.nom;
+            localStorage.setItem("selectedHotel", JSON.stringify(hotelData));
         }
 
         if (item.type === "compagnie") {
-            currentData.compagnie = item.nom;
-            localStorage.setItem("selectedFlight", JSON.stringify({
-                num_vol: item.num_vol,
-                num_vol_retourner: item.num_vol_retourner,
+            console.log("✈️ Type = compagnie détecté");
+            console.log("📊 volType pour déterminer aller/retour:", volType);
+            
+            const flightData = {
+                num_vol: item.num_vol || item.id,
+                num_vol_retourner: item.num_vol_retourner || 0,
+                id_vol: item.id_vol || item.id || item.num_vol,
+                nom: item.nom,
                 compagnie: item.nom,
-                ville:item.ville
-            }));
+                ville: item.ville,
+                prix: item.prix
+            };
+            
+            
+            if (volType === "aller") {
+                console.log("💾 Sauvegarde vol ALLER:", flightData);
+                localStorage.setItem("selectedVolAller", JSON.stringify(flightData));
+                currentData.volAller = item.nom;
+            } else if (volType === "retour") {
+                console.log("💾 Sauvegarde vol RETOUR:", flightData);
+                localStorage.setItem("selectedVolRetour", JSON.stringify(flightData));
+                currentData.volRetour = item.nom;
+            } else {
+               
+                console.log("💾 Sauvegarde vol (legacy):", flightData);
+                localStorage.setItem("selectedFlight", JSON.stringify(flightData));
+                currentData.compagnie = item.nom;
+            }
         }
         
         if (destinationFilter) currentData.destination = destinationFilter;
         if (budgetFilter) currentData.budget = budgetFilter;
 
         localStorage.setItem("formData", JSON.stringify(currentData));
+        console.log("✅ Données sauvegardées dans localStorage");
         navigate("/formulaire");
     };
 

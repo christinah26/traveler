@@ -6,7 +6,7 @@ export default async function getBookings(
     pays_depart: string,
     pays_arrivee: string
 ) {
-    try {
+    try { 
         const response = await fetch(url + "bookings", {
             method: "POST",
             headers: {

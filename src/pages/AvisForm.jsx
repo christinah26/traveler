@@ -1,15 +1,70 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import ReviewSection from "../components/review";
 import ToggleSection from "../components/ToggleSection";
 import rating from "../api/Rating";
-import { useAuth } from "../contexts/AuthContext.tsx";
+import { useAuth } from "../contexts/AuthContext.js";
+import { jwtDecode } from 'jwt-decode';
 
-export default function AvisForm({ reservationId }) {
-  const {token} = useAuth();
+export default function AvisForm({  }) {
   const navigate = useNavigate();
+  const authContext = useAuth();
+  const [token, setToken] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [reservationId, setReservationId] = useState(null);
+  const [isReady, setIsReady] = useState(false);
+
+ 
+  useEffect(() => {
+    const getAuthData = () => {
+   
+      let activeToken = authContext?.token || localStorage.getItem("token");
+      setToken(activeToken);
+
+    
+      let activeUserId = authContext?.id;
+      if (!activeUserId) {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          try {
+            const user = JSON.parse(storedUser);
+            activeUserId = user.id || user.userId;
+          } catch (e) {
+            console.error("Erreur parsing user:", e);
+          }
+        }
+      }
+      setUserId(activeUserId || null);
+
+     
+      const propReservationId = null;
+      setReservationId(finalReservationId || null);
+
+      setIsReady(true);
+
+      console.log("🔑 Token chargé pour avis:", !!activeToken);
+      console.log("👤 User ID chargé:", activeUserId);
+      console.log("🎫 Reservation ID chargé:", finalReservationId);
+    };
+
+    getAuthData();
+  }, [authContext?.token, authContext?.id, propReservationId]);
+
+  
+  const isTokenValid = (token) => {
+    if (!token) return false;
+    try {
+      const decoded = jwtDecode(token);
+      return decoded.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  };
+
+  const isAuthenticated = token && isTokenValid(token);
+
   const [reviewData, setReviewData] = useState({
     user: "",
     hotel: "",
@@ -29,8 +84,24 @@ export default function AvisForm({ reservationId }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log("✅ Auth check:", { isAuthenticated, token: !!token, isReady });
+
+    // Vérifie l'authentification
+    if (!isAuthenticated) {
+      Swal.fire({
+        icon: "error",
+        text: "Vous devez être connecté pour laisser un avis.",
+        confirmButtonText: "OK",
+      }).then(() => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        navigate("/login");
+      });
+      return;
+    }
+
     if (!reviewData.user) {
-      Swal.fire("Erreur", "Merci d’indiquer votre nom ou e-mail", "warning");
+      Swal.fire("Erreur", "Merci d'indiquer votre nom ou e-mail", "warning");
       return;
     }
 
@@ -42,25 +113,32 @@ export default function AvisForm({ reservationId }) {
       return;
     }
 
-    const token = localStorage.getItem("token") || "";
-    if (!token) {
-      Swal.fire("Erreur", "Vous devez être connecté pour laisser un avis", "error");
+    // Vérifie que au moins un avis est présent
+    if (!reviewData.hotelComment && !reviewData.airlineComment) {
+      Swal.fire("Erreur", "Merci de laisser au moins un commentaire", "warning");
       return;
     }
 
+    // Le num_reservation est déjà dans l'API du backend (via le token)
+    const ratingData = {
+      note_hotel: reviewData.hotelRating,
+      avis_hotel: reviewData.hotelComment,
+      note_compagnie_aerienne_aller: reviewData.airlineRating,
+      avis_compagnie_aerienne_aller: reviewData.airlineComment,
+      note_compagnie_aerienne_retour: 0,
+      avis_compagnie_aerienne_retour: "",
+    };
+
+    console.log("📤 Envoi avis avec:", ratingData);
+    console.log("📝 JSON stringifié:", JSON.stringify(ratingData, null, 2));
+
     setLoading(true);
     try {
-      const res = await rating(token, {
-        num_reservation: reservationId, // <-- ici on passe le vrai ID
-        note_hotel: reviewData.hotelRating,
-        avis_hotel: reviewData.hotelComment,
-        note_compagnie_aerienne_aller: reviewData.airlineRating,
-        avis_compagnie_aerienne_aller: reviewData.airlineComment,
-        note_compagnie_aerienne_retour: 0,
-        avis_compagnie_aerienne_retour: "",
-      });
+      const res = await rating(token, ratingData);
 
-      if (res) {
+      console.log("📦 Réponse avis:", res);
+
+      if (res && res.success) {
         Swal.fire("Merci !", "Votre avis a été publié avec succès", "success");
         setReviewData({
           user: "",
@@ -71,17 +149,37 @@ export default function AvisForm({ reservationId }) {
           airlineRating: 0,
           airlineComment: "",
         });
-        navigate("/"); 
+        navigate("/");
+      } else if (res && res.status === 401) {
+        // Token expiré
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        Swal.fire({
+          icon: "error",
+          text: "Votre session a expiré. Veuillez vous reconnecter.",
+          confirmButtonText: "OK",
+        }).then(() => {
+          navigate("/login");
+        });
       } else {
-        Swal.fire("Erreur", "Impossible d'envoyer votre avis", "error");
+        Swal.fire("Erreur", res?.message || "Impossible d'envoyer votre avis", "error");
       }
     } catch (err) {
-      console.error(err);
+      console.error("❌ Erreur:", err);
       Swal.fire("Erreur", "Une erreur est survenue lors de l'envoi", "error");
     } finally {
       setLoading(false);
     }
   };
+
+  // Montre un loader en attendant que le token soit chargé
+  if (!isReady) {
+    return (
+      <div className="flex h-screen justify-center items-center bg-blue-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50 p-6">
@@ -174,6 +272,3 @@ export default function AvisForm({ reservationId }) {
     </div>
   );
 }
-
-
-
