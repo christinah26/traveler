@@ -4,8 +4,11 @@ import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import ReviewSection from "../components/review";
 import ToggleSection from "../components/ToggleSection";
+import rating from "../api/Rating";
+import { useAuth } from "../contexts/AuthContext.tsx";
 
-export default function AvisForm() {
+export default function AvisForm({ reservationId }) {
+  const {token} = useAuth();
   const navigate = useNavigate();
   const [reviewData, setReviewData] = useState({
     user: "",
@@ -18,37 +21,67 @@ export default function AvisForm() {
   });
 
   const [sections, setSections] = useState({ hotel: true, airline: true });
+  const [loading, setLoading] = useState(false);
 
   const handleSectionToggle = (type) =>
     setSections((prev) => ({ ...prev, [type]: !prev[type] }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!reviewData.user) 
-      { Swal.fire(
-        "Erreur",
-        "Merci d’indiquer votre nom ou e-mail", "warning"); 
-        return; } 
-      
-    if ( (sections.hotel && (!reviewData.hotel || reviewData.hotelRating === 0)) || (sections.airline && (!reviewData.airline || reviewData.airlineRating === 0)) ) 
-        { Swal.fire( 
-          "Erreur",
-          "Merci de remplir tous les champs et de donner une note", "warning" ); 
-          return; } 
 
-          console.log("Avis soumis :", reviewData);
-          Swal.fire( "Merci !", "Votre avis a été publié avec succès", "success" ); 
-        
-          // Reset
-        setReviewData({ 
+    if (!reviewData.user) {
+      Swal.fire("Erreur", "Merci d’indiquer votre nom ou e-mail", "warning");
+      return;
+    }
+
+    if (
+      (sections.hotel && (!reviewData.hotel || reviewData.hotelRating === 0)) ||
+      (sections.airline && (!reviewData.airline || reviewData.airlineRating === 0))
+    ) {
+      Swal.fire("Erreur", "Merci de remplir tous les champs et de donner une note", "warning");
+      return;
+    }
+
+    const token = localStorage.getItem("token") || "";
+    if (!token) {
+      Swal.fire("Erreur", "Vous devez être connecté pour laisser un avis", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await rating(token, {
+        num_reservation: reservationId, // <-- ici on passe le vrai ID
+        note_hotel: reviewData.hotelRating,
+        avis_hotel: reviewData.hotelComment,
+        note_compagnie_aerienne_aller: reviewData.airlineRating,
+        avis_compagnie_aerienne_aller: reviewData.airlineComment,
+        note_compagnie_aerienne_retour: 0,
+        avis_compagnie_aerienne_retour: "",
+      });
+
+      if (res) {
+        Swal.fire("Merci !", "Votre avis a été publié avec succès", "success");
+        setReviewData({
           user: "",
-          hotel: "", 
+          hotel: "",
           hotelRating: 0,
           hotelComment: "",
           airline: "",
           airlineRating: 0,
-          airlineComment: "", });
-        };
+          airlineComment: "",
+        });
+        navigate("/"); 
+      } else {
+        Swal.fire("Erreur", "Impossible d'envoyer votre avis", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      Swal.fire("Erreur", "Une erreur est survenue lors de l'envoi", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-blue-50 p-6">
@@ -88,13 +121,9 @@ export default function AvisForm() {
               nameValue={reviewData.hotel}
               onNameChange={(v) => setReviewData({ ...reviewData, hotel: v })}
               ratingValue={reviewData.hotelRating}
-              onRatingChange={(v) =>
-                setReviewData({ ...reviewData, hotelRating: v })
-              }
+              onRatingChange={(v) => setReviewData({ ...reviewData, hotelRating: v })}
               commentValue={reviewData.hotelComment}
-              onCommentChange={(v) =>
-                setReviewData({ ...reviewData, hotelComment: v })
-              }
+              onCommentChange={(v) => setReviewData({ ...reviewData, hotelComment: v })}
               required
             />
           )}
@@ -105,13 +134,9 @@ export default function AvisForm() {
               nameValue={reviewData.airline}
               onNameChange={(v) => setReviewData({ ...reviewData, airline: v })}
               ratingValue={reviewData.airlineRating}
-              onRatingChange={(v) =>
-                setReviewData({ ...reviewData, airlineRating: v })
-              }
+              onRatingChange={(v) => setReviewData({ ...reviewData, airlineRating: v })}
               commentValue={reviewData.airlineComment}
-              onCommentChange={(v) =>
-                setReviewData({ ...reviewData, airlineComment: v })
-              }
+              onCommentChange={(v) => setReviewData({ ...reviewData, airlineComment: v })}
               required
             />
           )}
@@ -136,9 +161,12 @@ export default function AvisForm() {
             </button>
             <button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition"
+              disabled={loading}
+              className={`flex-1 ${
+                loading ? "bg-gray-400" : "bg-gradient-to-r from-blue-600 to-blue-700"
+              } text-white py-2.5 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition`}
             >
-              Publier l'avis
+              {loading ? "Envoi..." : "Publier l'avis"}
             </button>
           </div>
         </form>
@@ -146,5 +174,6 @@ export default function AvisForm() {
     </div>
   );
 }
+
 
 

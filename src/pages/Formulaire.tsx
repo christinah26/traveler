@@ -24,7 +24,6 @@ export default function Formulaire() {
 
   const navigate = useNavigate();
   const { token  } = useAuth(); 
-  const isAuthenticated = !!token;
 
   const storedData = JSON.parse(localStorage.getItem("formData") || "{}");
   const [formData, setFormData] = useState<FormData>({
@@ -60,8 +59,8 @@ export default function Formulaire() {
   const handleSubmit = async () => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-    console.log("🔍 Token:", token);
-    console.log("👤 User:", user);
+    console.log(" Token:", token);
+    console.log("User:", user);
 
     if (!token || !user?.id) {
       console.log("Non connecté. Redirection vers login...");
@@ -77,8 +76,8 @@ export default function Formulaire() {
     const selectedHotel = JSON.parse(localStorage.getItem("selectedHotel") || "{}");
     const selectedFlight = JSON.parse(localStorage.getItem("selectedFlight") || "{}");
 
-    console.log("🏨 Hotel:", selectedHotel);
-    console.log("✈️ Vol:", selectedFlight);
+    console.log(" Hotel:", selectedHotel);
+    console.log("Vol:", selectedFlight);
 
     if (!selectedHotel?.num_chambre || !selectedFlight?.num_vol) {
       console.log("Réservation incomplète");
@@ -92,7 +91,7 @@ export default function Formulaire() {
     const code = "IND";
 
     try {
-      console.log("📡 Envoi réservation...", { num_vol, num_vol_retourner, num_chambre, id_client, code });
+      console.log("Envoi réservation...", { num_vol, num_vol_retourner, num_chambre, id_client, code });
       
       const response = await createBooking(
         token, 
@@ -103,7 +102,7 @@ export default function Formulaire() {
         code
       );
 
-      console.log("📦 Réponse:", response);
+      console.log("Réponse:", response);
 
       if (response && response.success) {
         console.log("Réservation créée avec succès !");
