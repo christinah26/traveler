@@ -24,8 +24,7 @@ function ForgotPassword() {
             return;
         }
 
-        console.log("Demande de réinitialisation pour:", email);
-
+  
         setIsSubmitted(true);
     };
 

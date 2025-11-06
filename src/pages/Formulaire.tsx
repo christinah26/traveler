@@ -176,9 +176,7 @@ export default function Formulaire() {
         code
       );
 
-      console.log("📦 Réponse serveur:", response);
-
-      if (response && (response.success || response.status === 200 || response.message)) {
+       if (response && (response.success || response.status === 200 || response.message)) {
         if (response?.num_reservation) {
           // Stockez TOUS les nums_reservation dans un array
           let reservations = JSON.parse(localStorage.getItem("userReservations") || "[]");

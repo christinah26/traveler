@@ -45,9 +45,7 @@ function Dashboard() {
       const userData = await clients(token, userId);
 
       if (userData) {
-        console.log("👤 User data reçues:", userData);
-        console.log("👤 Structure complète userData:", JSON.stringify(userData, null, 2));
-
+   
         setUserInfo(userData);
 
       const userReservations = userData.reservations || [];
@@ -131,9 +129,7 @@ function Dashboard() {
       hotel: reservation.hotel || {},
     };
   
-    console.log("✅ Réservation normalisée:", normalizedReservation);
-    console.log("📝 Redirection vers avis pour réservation #:", normalizedReservation.num_reservation);
-  
+    
     // Stocke en localStorage comme fallback
     localStorage.setItem("tempReservationData", JSON.stringify(normalizedReservation));
     localStorage.setItem("tempReservationId", String(normalizedReservation.num_reservation));

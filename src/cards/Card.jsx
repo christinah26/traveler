@@ -56,7 +56,6 @@ export default function Card({
                 id_hotel,
                 id_vol,
             };
-            console.log("📤 Appel onReserve avec item:", itemData);
             onReserve(itemData);
         } else {
             // Fallback si onReserve n'est pas passé

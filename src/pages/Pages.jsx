@@ -10,7 +10,8 @@ import getHotels from "../api/Hotels.ts";
 import getAirlines from "../api/Airlines.ts";
 import { NavbarContext } from "../contexts/NavbarContext.tsx";
 import Header from "../Top/navbar.jsx";
-import AvisSection from "../Section/avis.jsx"
+
+
 
 export default function Pages() {
     const { pageType } = useParams();
@@ -28,9 +29,7 @@ export default function Pages() {
     const destinationFilter = storedData.destination || null;
     const budgetFilter = storedData.budget ? parseFloat(storedData.budget) : null;
     const volType = storedData.volType; 
-    const paysDepart = storedData.paysDepart;
-    const paysArrivee = storedData.paysArrivee;
-
+  
     const mapHotelData = (hotel, index) => {
         const stableId = hotel.id_hotel || hotel.id || `hotel_${index}_${hotel.nom}`;
         
@@ -79,37 +78,29 @@ export default function Pages() {
             setLoading(true);
             try {
                 if (pageType === "hotels") {
-                    console.log("🏨 Fetching hotels pour:", selectedCountry);
-                    const result = await getHotels(token, selectedCountry || "France");
-                    console.log("🏨 Hotels bruts:", result);
-
+                   const result = await getHotels(token, selectedCountry || "France");
+            
                     let hotelsArray = [];
                     if (result?.hotels) hotelsArray = result.hotels;
                     else if (Array.isArray(result)) hotelsArray = result;
                     else if (result?.data) hotelsArray = result.data;
 
                     const mapped = hotelsArray.map((hotel, index) => mapHotelData(hotel, index));
-                    console.log("🏨 Hotels mappés:", mapped);
-                    setData(mapped);
+              setData(mapped);
                     setVisible(3); 
 
                 } else if (pageType === "compagnies") {
-                    console.log("✈️ Fetching airlines pour:", selectedCountry);
-                    const result = await getAirlines(token, selectedCountry);
-                    console.log("✈️ Airlines brutes:", result);
-                    
-                    let airlinesArray = [];
+                 const result = await getAirlines(token, selectedCountry);
+                   let airlinesArray = [];
                     if (result?.airlines) airlinesArray = result.airlines;
                     else if (Array.isArray(result)) airlinesArray = result;
                     else if (result?.data) airlinesArray = result.data;
 
                     const mapped = airlinesArray.map((airline, index) => mapAirlineData(airline, index));
-                    console.log("✈️ Airlines mappées:", mapped);
                     setData(mapped);
                     setVisible(3);
                 }
             } catch (err) {
-                console.error("❌ Erreur:", err);
                 setData([]);
             } finally {
                 setLoading(false);
@@ -152,17 +143,11 @@ export default function Pages() {
     };
 
     const handleCardClick = (item) => {
-        console.log("====== 🖱️ CLICK SUR CARTE ======");
-        console.log("🖱️ Item cliqué COMPLET:", item);
-        console.log("📊 Type de l'item:", item.type);
-        console.log("📊 volType:", volType);
-        
+       
         const currentData = JSON.parse(localStorage.getItem("formData")) || {};
 
         if (item.type === "hotel") {
-            console.log("🏨 Type = hotel détecté");
-            
-            const hotelData = {
+             const hotelData = {
                 num_chambre: item.num_chambre || item.id,
                 id_hotel: item.id_hotel || item.id || item.num_chambre,
                 categorie_chambre: item.categorie_chambre,
@@ -171,15 +156,12 @@ export default function Pages() {
                 ville: item.ville
             };
             
-            console.log("💾 Sauvegarde hôtel:", hotelData);
-            currentData.hotel = item.nom;
+              currentData.hotel = item.nom;
             localStorage.setItem("selectedHotel", JSON.stringify(hotelData));
         }
 
         if (item.type === "compagnie") {
-            console.log("✈️ Type = compagnie détecté");
-            console.log("📊 volType pour déterminer aller/retour:", volType);
-            
+           
             const flightData = {
                 num_vol: item.num_vol || item.id,
                 num_vol_retourner: item.num_vol_retourner || 0,
@@ -191,14 +173,12 @@ export default function Pages() {
             };
             
             if (volType === "aller") {
-                console.log("💾 Sauvegarde vol ALLER:", flightData);
-                localStorage.setItem("selectedVolAller", JSON.stringify(flightData));
+                 localStorage.setItem("selectedVolAller", JSON.stringify(flightData));
                 currentData.volAller = item.nom;
             } else if (volType === "retour") {
               localStorage.setItem("selectedVolRetour", JSON.stringify(flightData));
                 currentData.volRetour = item.nom;
             } else {
-                console.log("💾 Sauvegarde vol (legacy):", flightData);
                 localStorage.setItem("selectedFlight", JSON.stringify(flightData));
                 currentData.compagnie = item.nom;
             }
@@ -226,7 +206,6 @@ export default function Pages() {
                         <select
                             value={selectedCountry}
                             onChange={(e) => {
-                                console.log("🌍 Changement pays:", e.target.value);
                                 setSelectedCountry(e.target.value);
                                 setVisible(3);
                             }}
@@ -243,7 +222,6 @@ export default function Pages() {
                             type="text"
                             value={searchTerm}
                             onChange={(e) => {
-                                console.log("🔍 Recherche:", e.target.value);
                                 setSearchTerm(e.target.value);
                                 setVisible(3);
                             }}
@@ -259,8 +237,7 @@ export default function Pages() {
                             type="text"
                             value={searchTerm}
                             onChange={(e) => {
-                                console.log("🔍 Recherche:", e.target.value);
-                                setSearchTerm(e.target.value);
+                                 setSearchTerm(e.target.value);
                                 setVisible(3);
                             }}
                             placeholder="Rechercher une compagnie..."
@@ -305,7 +282,6 @@ export default function Pages() {
                             {visible < filteredData.length ? (
                                 <button
                                     onClick={() => {
-                                        console.log("📌 Voir plus items");
                                         setVisible(visible + 3);
                                     }}
                                     className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
@@ -316,7 +292,6 @@ export default function Pages() {
                                 filteredData.length > 3 && (
                                     <button
                                         onClick={() => {
-                                            console.log("📌 Voir moins items");
                                             setVisible(3);
                                         }}
                                         className="bg-gray-400 text-white px-6 py-3 rounded-lg hover:bg-gray-500 transition-colors font-semibold"
@@ -330,10 +305,7 @@ export default function Pages() {
                 )}
             </section>
 
-            <AvisSection 
-                type={pageType === "hotels" ? "hotels" : "airlines"}
-                data={data}
-            />   
+           
 
             <div className="flex justify-center my-8">
                 <Retour />

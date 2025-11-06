@@ -45,7 +45,6 @@ function Avis() {
         setError("Impossible de charger les données de la réservation");
       }
     } catch (err) {
-      console.error("❌ Erreur chargement réservation:", err);
       setError("Erreur lors du chargement des données");
     }
   }, [location, token]);
@@ -163,8 +162,6 @@ function Avis() {
 
 
       const response = await rating(token, ratingData);
-
-      console.log("📊 Réponse reçue:", response);
 
       if (response && response.status === 403) {
         Swal.fire({
