@@ -2,7 +2,6 @@ import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 // @ts-ignore
 import Logo from "../assets/traveler-nobg.png";
-import SearchBar from "../components/searchBar.tsx";
 import Logout from "../components/logout.tsx";
 import { NavbarContext } from "../contexts/NavbarContext.tsx";
 
@@ -47,9 +46,7 @@ function Header() {
                 <ul className="hidden md:flex gap-6 list-none items-center">
                     {Navbar?.isAuthenticated ? (
                         <>
-                            <li>
-                                <SearchBar />
-                            </li>
+                           
                             <li>
                                 <Link
                                     to="/"
@@ -82,14 +79,7 @@ function Header() {
                                     Compagnies aériennes
                                 </Link>
                             </li>
-                            <li>
-                                <a
-                                    href="#contact"
-                                    className="hover:text-purple-600 hover:scale-110 transition-all duration-300"
-                                >
-                                    Contact
-                                </a>
-                            </li>
+                          
                             <li>
                                 <Link
                                     to="/formulaire"
@@ -99,12 +89,12 @@ function Header() {
                                 </Link>
                             </li>
                             <li>
-                                <Link
-                                    to="/avis"
+                                <a
+                                    href="#contact"
                                     className="hover:text-purple-600 hover:scale-110 transition-all duration-300"
                                 >
-                                    Laisser un avis
-                                </Link>
+                                    Contact
+                                </a>
                             </li>
                             <li>
                                 <Logout />
@@ -149,7 +139,6 @@ function Header() {
                 <div className="flex flex-col items-center mt-10 gap-6">
                     {Navbar?.isAuthenticated ? (
                         <>
-                            <SearchBar />
                             <Link
                                 to="/"
                                 onClick={toggleMenu}
@@ -171,13 +160,7 @@ function Header() {
                             >
                                 Compagnies aériennes
                             </Link>
-                            <a
-                                href="#contact"
-                                onClick={toggleMenu}
-                                className="text-lg font-bold text-blue-900"
-                            >
-                                Contact
-                            </a>
+                           
                             <Link
                                 to="/formulaire"
                                 onClick={toggleMenu}
@@ -185,20 +168,13 @@ function Header() {
                             >
                                 Réservation
                             </Link>
-                            <Link
-                                to="/avis"
+                            <a
+                                href="#contact"
                                 onClick={toggleMenu}
                                 className="text-lg font-bold text-blue-900"
                             >
-                                Laisser un avis
-                            </Link>
-                            <Link
-                                to="/home"
-                                onClick={toggleMenu}
-                                className="text-lg font-bold text-blue-900"
-                            >
-                                Mon espace
-                            </Link>
+                                Contact
+                            </a>
                             <div className="text-lg font-bold text-blue-900">
                                 <Logout />
                             </div>

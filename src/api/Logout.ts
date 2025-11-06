@@ -6,7 +6,7 @@ export default async function LogoutUser(
 ) {
     if (!token) return;
     const response = await fetch(url + "auth/logout", {
-        method: "POST",
+        method: "DELETE",
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,

@@ -5,7 +5,6 @@ import Header from "../Top/header.jsx";
 import SectionList from "../Section/SectionList.jsx";
 import Contact from "../Section/contact.jsx";
 import FadeIn from "../components/fadeIn.jsx";
-import AvisSection from "../Section/AvisSection.jsx";
 import HotelData from "../Data/HotelData.jsx"; 
 import AirlineData from "../Data/aeroData.jsx";
 function Accueil() {
@@ -55,10 +54,6 @@ function Accueil() {
                                 showCategorie: false,
                             }}
                         />
-                    </FadeIn>
-
-                    <FadeIn>
-                        <AvisSection />
                     </FadeIn>
 
                     <FadeIn>

@@ -4,14 +4,13 @@ import Footer from "../Top/footer.jsx";
 import Card from "../cards/Card.jsx";
 import Contact from "../Section/contact.jsx";
 import Retour from "../components/retour.tsx";
-import pays from "../Data/pays.json";
+import pays from "../utils/pays.ts";
 import { useAuth } from "../contexts/AuthContext.js";
 import getHotels from "../api/Hotels.ts";
 import getAirlines from "../api/Airlines.ts";
 import { NavbarContext } from "../contexts/NavbarContext.tsx";
 import Header from "../Top/navbar.jsx";
-
-
+import AvisSection from "../Section/avis.jsx"
 
 export default function Pages() {
     const { pageType } = useParams();
@@ -32,7 +31,6 @@ export default function Pages() {
     const paysDepart = storedData.paysDepart;
     const paysArrivee = storedData.paysArrivee;
 
-    
     const mapHotelData = (hotel, index) => {
         const stableId = hotel.id_hotel || hotel.id || `hotel_${index}_${hotel.nom}`;
         
@@ -52,31 +50,22 @@ export default function Pages() {
     };
 
     const mapAirlineData = (airline, index) => {
-     
-        const nameHash = airline.nom.split('').reduce((a, b) => {
-            a = ((a << 5) - a) + b.charCodeAt(0);
-            return a & a; 
-        }, 0);
-        
-        const stableId = Math.abs(nameHash) || (index + 1);
+        const VRAI_ID_VOL = airline.num_vol || airline.id_vol || airline.id || `erreur_${index}`;
         
         return {
-            id: `airline_${index}`,
-            num_vol: stableId,
+            id: VRAI_ID_VOL,
+            num_vol: VRAI_ID_VOL,
             num_vol_retourner: 0,
             nom: airline.nom || "Sans nom",
             image: airline.logo || airline.image || "",
             desc: airline.description || airline.desc || "",
             pays: airline.pays || "",
             ville: airline.ville || "",
-            date: airline.date || "",
             prix: airline.prix || "",
             nb_etoiles: airline.nb_etoiles || airline.rating || 0,
             type: "compagnie", 
         };
     };
-
-    
     useEffect(() => {
         if (pageType !== "hotels" && pageType !== "compagnies") return;
 
@@ -90,9 +79,9 @@ export default function Pages() {
             setLoading(true);
             try {
                 if (pageType === "hotels") {
-                    console.log(" Fetching hotels pour:", selectedCountry);
+                    console.log("🏨 Fetching hotels pour:", selectedCountry);
                     const result = await getHotels(token, selectedCountry || "France");
-                    console.log(" Hotels bruts:", result);
+                    console.log("🏨 Hotels bruts:", result);
 
                     let hotelsArray = [];
                     if (result?.hotels) hotelsArray = result.hotels;
@@ -100,29 +89,14 @@ export default function Pages() {
                     else if (result?.data) hotelsArray = result.data;
 
                     const mapped = hotelsArray.map((hotel, index) => mapHotelData(hotel, index));
-                    console.log(" Hotels mappés:", mapped);
+                    console.log("🏨 Hotels mappés:", mapped);
                     setData(mapped);
+                    setVisible(3); 
 
                 } else if (pageType === "compagnies") {
-                    console.log("Fetching airlines");
-                    const result = await getAirlines(token , selectedCountry);
-                    console.log(" Airlines brutes:", result);
-                    
-                 
-                    if (Array.isArray(result) && result[0]) {
-                        console.log("🔍 Première airline (détail):", result[0]);
-                        console.log("🔍 Clés de la première airline:", Object.keys(result[0]));
-                        console.log("🔍 Valeurs:", JSON.stringify(result[0], null, 2));
-                        console.log("🔍 Entrée complète:", result[0]);
-                    } else if (result?.airlines && result.airlines[0]) {
-                        console.log("🔍 Première airline (détail):", result.airlines[0]);
-                        console.log("🔍 Clés de la première airline:", Object.keys(result.airlines[0]));
-                        console.log("🔍 Valeurs:", JSON.stringify(result.airlines[0], null, 2));
-                        console.log("🔍 Entrée complète:", result.airlines[0]);
-                    }
-                    
-                  
-                    console.log("🔍 Premiers 5 airlines:", result.slice ? result.slice(0, 5) : result?.airlines?.slice(0, 5));
+                    console.log("✈️ Fetching airlines pour:", selectedCountry);
+                    const result = await getAirlines(token, selectedCountry);
+                    console.log("✈️ Airlines brutes:", result);
                     
                     let airlinesArray = [];
                     if (result?.airlines) airlinesArray = result.airlines;
@@ -130,11 +104,12 @@ export default function Pages() {
                     else if (result?.data) airlinesArray = result.data;
 
                     const mapped = airlinesArray.map((airline, index) => mapAirlineData(airline, index));
-                    console.log(" Airlines mappées:", mapped);
+                    console.log("✈️ Airlines mappées:", mapped);
                     setData(mapped);
+                    setVisible(3);
                 }
             } catch (err) {
-                console.error("Erreur:", err);
+                console.error("❌ Erreur:", err);
                 setData([]);
             } finally {
                 setLoading(false);
@@ -144,20 +119,28 @@ export default function Pages() {
         fetchData();
     }, [pageType, token, selectedCountry, navbar.isAuthenticated, navigate]);
 
-   
+    
     const filteredData = data.filter((item) => {
         let valid = true;
 
+        // Filtre destination
         if (destinationFilter && item.ville && item.ville !== destinationFilter) {
             valid = false;
         }
 
+        // Filtre budget
         if (budgetFilter && item.prix && item.prix > budgetFilter) {
             valid = false;
         }
 
+        // Filtre recherche (nom)
         if (searchTerm && item.nom) {
-            valid = valid && item.nom.toLowerCase().includes(searchTerm.toLowerCase());
+            const searchLower = searchTerm.toLowerCase();
+            const nomMatch = item.nom.toLowerCase().includes(searchLower);
+            const villeMatch = item.ville && item.ville.toLowerCase().includes(searchLower);
+            const paysMatch = item.pays && item.pays.toLowerCase().includes(searchLower);
+            
+            valid = valid && (nomMatch || villeMatch || paysMatch);
         }
 
         return valid;
@@ -168,7 +151,6 @@ export default function Pages() {
         compagnies: "Nos Compagnies Aériennes",
     };
 
-  
     const handleCardClick = (item) => {
         console.log("====== 🖱️ CLICK SUR CARTE ======");
         console.log("🖱️ Item cliqué COMPLET:", item);
@@ -208,7 +190,6 @@ export default function Pages() {
                 prix: item.prix
             };
             
-            
             if (volType === "aller") {
                 console.log("💾 Sauvegarde vol ALLER:", flightData);
                 localStorage.setItem("selectedVolAller", JSON.stringify(flightData));
@@ -218,7 +199,6 @@ export default function Pages() {
                 localStorage.setItem("selectedVolRetour", JSON.stringify(flightData));
                 currentData.volRetour = item.nom;
             } else {
-               
                 console.log("💾 Sauvegarde vol (legacy):", flightData);
                 localStorage.setItem("selectedFlight", JSON.stringify(flightData));
                 currentData.compagnie = item.nom;
@@ -242,42 +222,51 @@ export default function Pages() {
                     {titles[pageType] || "Liste"}
                 </h1>
 
-                {/* RECHERCHE */}
-                {(pageType === "hotels" || pageType === "compagnies") && (
+              
+                {pageType === "hotels" && (
                     <div className="mb-8 flex flex-col md:flex-row gap-4 justify-center">
-                        {pageType === "hotels" && (
-                            <select
-                                value={selectedCountry}
-                                onChange={(e) => setSelectedCountry(e.target.value)}
-                                className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
-                            >
-                                {pays.map((p) => (
-                                    <option key={p.CODE} value={p.NOM}>
-                                        {p.NOM}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                         {pageType === "compagnies" && (
-                            <select
-                                value={selectedCountry}
-                                onChange={(e) => setSelectedCountry(e.target.value)}
-                                className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none"
-                            >
-                                {pays.map((p) => (
-                                    <option key={p.CODE} value={p.NOM}>
-                                        {p.NOM}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
+                        <select
+                            value={selectedCountry}
+                            onChange={(e) => {
+                                console.log("🌍 Changement pays:", e.target.value);
+                                setSelectedCountry(e.target.value);
+                                setVisible(3);
+                            }}
+                            className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none cursor-pointer"
+                        >
+                            {pays.map((p) => (
+                                <option key={p.CODE} value={p.NOM}>
+                                    {p.NOM}
+                                </option>
+                            ))}
+                        </select>
 
                         <input
                             type="text"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Rechercher..."
+                            onChange={(e) => {
+                                console.log("🔍 Recherche:", e.target.value);
+                                setSearchTerm(e.target.value);
+                                setVisible(3);
+                            }}
+                            placeholder="Rechercher par nom"
                             className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none w-full md:w-64"
+                        />
+                    </div>
+                )}
+
+                {pageType === "compagnies" && (
+                    <div className="mb-8 flex justify-center">
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                console.log("🔍 Recherche:", e.target.value);
+                                setSearchTerm(e.target.value);
+                                setVisible(3);
+                            }}
+                            placeholder="Rechercher une compagnie..."
+                            className="px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-600 focus:outline-none w-full md:w-96"
                         />
                     </div>
                 )}
@@ -292,9 +281,9 @@ export default function Pages() {
                         {/* CARDS */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                             {filteredData.length > 0 ? (
-                                filteredData.slice(0, visible).map((item) => (
+                                filteredData.slice(0, visible).map((item, index) => (
                                     <Card
-                                        key={item.id}
+                                        key={`${pageType}-${item.id}-${index}`}
                                         {...item}
                                         showImage={true}
                                         showPrice={true}
@@ -308,7 +297,7 @@ export default function Pages() {
                                 <p className="text-center text-gray-600 col-span-full py-10">
                                     {data.length === 0 
                                         ? "Aucune donnée disponible."
-                                        : "Aucun résultat."}
+                                        : "Aucun résultat ne correspond à vos critères de recherche."}
                                 </p>
                             )}
                         </div>
@@ -317,7 +306,10 @@ export default function Pages() {
                         <div className="flex justify-center mt-8">
                             {visible < filteredData.length ? (
                                 <button
-                                    onClick={() => setVisible(visible + 3)}
+                                    onClick={() => {
+                                        console.log("📌 Voir plus items");
+                                        setVisible(visible + 3);
+                                    }}
                                     className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                                 >
                                     Voir plus ↓
@@ -325,7 +317,10 @@ export default function Pages() {
                             ) : (
                                 filteredData.length > 3 && (
                                     <button
-                                        onClick={() => setVisible(3)}
+                                        onClick={() => {
+                                            console.log("📌 Voir moins items");
+                                            setVisible(3);
+                                        }}
                                         className="bg-gray-400 text-white px-6 py-3 rounded-lg hover:bg-gray-500 transition-colors font-semibold"
                                     >
                                         Voir moins ↑
@@ -336,6 +331,11 @@ export default function Pages() {
                     </>
                 )}
             </section>
+
+            <AvisSection 
+                type={pageType === "hotels" ? "hotels" : "airlines"}
+                data={data}
+            />   
 
             <div className="flex justify-center my-8">
                 <Retour />

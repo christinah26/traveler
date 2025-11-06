@@ -1,24 +1,16 @@
 import url from "./url";
 
-
-// Pour obtenir la liste des résrvations
-export default async function getAvailableFlights(
-    token: string,
-    pays_depart: string,
-    pays_arrivee: string
-) {
-    try { 
-        const response = await fetch(url + "bookings", {
+// Pour obtenir l'avis des hôtels
+export default async function AvisHotels(token: string, id: number) {
+    try {
+        const response = await fetch(url + "hotels/rating", {
             method: "POST",
             headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/json",
                 "ngrok-skip-browser-warning": "69420",
             },
-            body: JSON.stringify({
-                pays_depart,
-                pays_arrivee,
-            }),
+            body: JSON.stringify({ id }),
         });
         const data = await response.json();
 

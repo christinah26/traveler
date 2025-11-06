@@ -141,7 +141,7 @@ export default function Card({
                 {/* Prix */}
                 {showPrice && prix && (
                     <p className="text-blue-800 font-bold text-xl mt-3">
-                        {prix} <span className="text-xl font-normal">$</span>
+                        {prix} <span className="text-xl font-normal">€</span>
                     </p>
                 )}
 

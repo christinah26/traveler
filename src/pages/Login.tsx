@@ -172,15 +172,6 @@ export default function Login({
                             </div>
                         </div>
 
-                        <div className="text-right">
-                            <Link
-                                to="/forgot-password"
-                                className="text-sm text-blue-600 hover:text-blue-700 font-semibold hover:underline"
-                            >
-                                Mot de passe oublié ?
-                            </Link>
-                        </div>
-
                         <div className="flex flex-col sm:flex-row gap-4 pt-4">
                             <button
                                 type="button"

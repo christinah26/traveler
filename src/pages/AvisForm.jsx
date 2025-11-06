@@ -1,96 +1,90 @@
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Star, Send, AlertCircle, Plane, Hotel } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import Navbar from "../Top/navbar";
+import Footer from "../Top/footer";
+import rating from "../api/rating";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
-import ReviewSection from "../components/review";
-import ToggleSection from "../components/ToggleSection";
-import rating from "../api/Rating";
-import { useAuth } from "../contexts/AuthContext.js";
-import { jwtDecode } from 'jwt-decode';
 
-export default function AvisForm({  }) {
+function Avis() {
   const navigate = useNavigate();
-  const authContext = useAuth();
-  const [token, setToken] = useState(null);
-  const [userId, setUserId] = useState(null);
-  const [reservationId, setReservationId] = useState(null);
-  const [isReady, setIsReady] = useState(false);
+  const location = useLocation();
+  const { token } = useAuth();
 
- 
+  const [reservation, setReservation] = useState(null);
+  const [ratings, setRatings] = useState({
+    hotel: { note: 0, avis: "" },
+    vol_aller: { note: 0, avis: "" },
+    vol_retour: { note: 0, avis: "" },
+  });
+  const [hoverRatings, setHoverRatings] = useState({
+    hotel: 0,
+    vol_aller: 0,
+    vol_retour: 0,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Récupère la réservation depuis le state
   useEffect(() => {
-    const getAuthData = () => {
-   
-      let activeToken = authContext?.token || localStorage.getItem("token");
-      setToken(activeToken);
+    try {
+      
+      let reservationData = location.state?.reservation;
 
-    
-      let activeUserId = authContext?.id;
-      if (!activeUserId) {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          try {
-            const user = JSON.parse(storedUser);
-            activeUserId = user.id || user.userId;
-          } catch (e) {
-            console.error("Erreur parsing user:", e);
-          }
+      if (!reservationData) {
+        const stored = localStorage.getItem("tempReservationData");
+        if (stored) {
+          reservationData = JSON.parse(stored);
         }
       }
-      setUserId(activeUserId || null);
 
-     
-      const propReservationId = null;
-      setReservationId(finalReservationId || null);
+      if (reservationData) {
+        console.log("📋 Réservation chargée:", reservationData);
 
-      setIsReady(true);
-
-      console.log("🔑 Token chargé pour avis:", !!activeToken);
-      console.log("👤 User ID chargé:", activeUserId);
-      console.log("🎫 Reservation ID chargé:", finalReservationId);
-    };
-
-    getAuthData();
-  }, [authContext?.token, authContext?.id, propReservationId]);
-
-  
-  const isTokenValid = (token) => {
-    if (!token) return false;
-    try {
-      const decoded = jwtDecode(token);
-      return decoded.exp * 1000 > Date.now();
-    } catch {
-      return false;
+        setReservation(reservationData);
+      } else {
+        setError("Impossible de charger les données de la réservation");
+      }
+    } catch (err) {
+      console.error("❌ Erreur chargement réservation:", err);
+      setError("Erreur lors du chargement des données");
     }
+  }, [location, token]);
+
+  const handleRatingChange = (category, note) => {
+    setRatings((prev) => ({
+      ...prev,
+      [category]: { ...prev[category], note },
+    }));
   };
 
-  const isAuthenticated = token && isTokenValid(token);
+  const handleAvisChange = (category, avis) => {
+    setRatings((prev) => ({
+      ...prev,
+      [category]: { ...prev[category], avis },
+    }));
+  };
 
-  const [reviewData, setReviewData] = useState({
-    user: "",
-    hotel: "",
-    hotelRating: 0,
-    hotelComment: "",
-    airline: "",
-    airlineRating: 0,
-    airlineComment: "",
-  });
+  const handleHoverRating = (category, value) => {
+    setHoverRatings((prev) => ({ ...prev, [category]: value }));
+  };
 
-  const [sections, setSections] = useState({ hotel: true, airline: true });
-  const [loading, setLoading] = useState(false);
-
-  const handleSectionToggle = (type) =>
-    setSections((prev) => ({ ...prev, [type]: !prev[type] }));
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    console.log("✅ Auth check:", { isAuthenticated, token: !!token, isReady });
-
-    // Vérifie l'authentification
-    if (!isAuthenticated) {
+  const handleSubmitReview = async () => {
+    if (!reservation) {
       Swal.fire({
         icon: "error",
-        text: "Vous devez être connecté pour laisser un avis.",
+        text: "Données de réservation manquantes",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    if (!token) {
+      console.error("❌ Token manquant!");
+      Swal.fire({
+        icon: "error",
+        text: "Session expirée, veuillez vous reconnecter",
         confirmButtonText: "OK",
       }).then(() => {
         localStorage.removeItem("token");
@@ -100,175 +94,422 @@ export default function AvisForm({  }) {
       return;
     }
 
-    if (!reviewData.user) {
-      Swal.fire("Erreur", "Merci d'indiquer votre nom ou e-mail", "warning");
+    // Validation
+    if (ratings.hotel.note === 0) {
+      Swal.fire({
+        icon: "warning",
+        text: "Veuillez noter l'hôtel",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
-    if (
-      (sections.hotel && (!reviewData.hotel || reviewData.hotelRating === 0)) ||
-      (sections.airline && (!reviewData.airline || reviewData.airlineRating === 0))
-    ) {
-      Swal.fire("Erreur", "Merci de remplir tous les champs et de donner une note", "warning");
+    if (!ratings.hotel.avis.trim()) {
+      Swal.fire({
+        icon: "warning",
+        text: "Veuillez donner un avis sur l'hôtel",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
-    // Vérifie que au moins un avis est présent
-    if (!reviewData.hotelComment && !reviewData.airlineComment) {
-      Swal.fire("Erreur", "Merci de laisser au moins un commentaire", "warning");
+    if (ratings.vol_aller.note === 0) {
+      Swal.fire({
+        icon: "warning",
+        text: "Veuillez noter le vol aller",
+        confirmButtonText: "OK",
+      });
       return;
     }
 
-    // Le num_reservation est déjà dans l'API du backend (via le token)
-    const ratingData = {
-      note_hotel: reviewData.hotelRating,
-      avis_hotel: reviewData.hotelComment,
-      note_compagnie_aerienne_aller: reviewData.airlineRating,
-      avis_compagnie_aerienne_aller: reviewData.airlineComment,
-      note_compagnie_aerienne_retour: 0,
-      avis_compagnie_aerienne_retour: "",
-    };
+    if (!ratings.vol_aller.avis.trim()) {
+      Swal.fire({
+        icon: "warning",
+        text: "Veuillez donner un avis sur le vol aller",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
 
-    console.log("📤 Envoi avis avec:", ratingData);
-    console.log("📝 JSON stringifié:", JSON.stringify(ratingData, null, 2));
+    if (ratings.vol_retour.note === 0) {
+      Swal.fire({
+        icon: "warning",
+        text: "Veuillez noter le vol retour",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
 
-    setLoading(true);
+    if (!ratings.vol_retour.avis.trim()) {
+      Swal.fire({
+        icon: "warning",
+        text: "Veuillez donner un avis sur le vol retour",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
     try {
-      const res = await rating(token, ratingData);
+      setLoading(true);
 
-      console.log("📦 Réponse avis:", res);
+      console.log("🔑 Token utilisé:", token ? "✓ Présent" : "✗ Manquant");
+      console.log("📋 ID Réservation:", reservation.num_reservation);
 
-      if (res && res.success) {
-        Swal.fire("Merci !", "Votre avis a été publié avec succès", "success");
-        setReviewData({
-          user: "",
-          hotel: "",
-          hotelRating: 0,
-          hotelComment: "",
-          airline: "",
-          airlineRating: 0,
-          airlineComment: "",
-        });
-        navigate("/");
-      } else if (res && res.status === 401) {
-        // Token expiré
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+      // Données  requises par l'API
+      const ratingData = {
+        num_reservation: Number(reservation.num_reservation),
+        note_hotel: Number(ratings.hotel.note),
+        avis_hotel: String(ratings.hotel.avis).trim(),
+        note_compagnie_aerienne_aller: Number(ratings.vol_aller.note),
+        avis_compagnie_aerienne_aller: String(ratings.vol_aller.avis).trim(),
+        note_compagnie_aerienne_retour: Number(ratings.vol_retour.note),
+        avis_compagnie_aerienne_retour: String(ratings.vol_retour.avis).trim(),
+      };
+
+      console.log("📤 Envoi des avis - Payload MINIMALISTE:");
+      console.log(JSON.stringify(ratingData, null, 2));
+      console.log("📊 Types des données:");
+      console.log("  - num_reservation:", typeof ratingData.num_reservation, ratingData.num_reservation);
+      console.log("  - note_hotel:", typeof ratingData.note_hotel, ratingData.note_hotel);
+      console.log("  - avis_hotel:", typeof ratingData.avis_hotel, ratingData.avis_hotel.substring(0, 50));
+
+      const response = await rating(token, ratingData);
+
+      console.log("📊 Réponse reçue:", response);
+
+      if (response && response.status === 403) {
+        console.error("❌ Erreur 403 Forbidden:", response.error);
         Swal.fire({
           icon: "error",
-          text: "Votre session a expiré. Veuillez vous reconnecter.",
-          confirmButtonText: "OK",
+          title: "Accès refusé",
+          text: "Vous n'avez pas les permissions nécessaires. Veuillez vous reconnecter.",
+          confirmButtonText: "Se reconnecter",
         }).then(() => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
           navigate("/login");
         });
+      } else if (response && response.status === 500) {
+        console.error("❌ Erreur serveur 500:", response.error);
+        console.error("📋 URL appelée:", response.url);
+        console.error("📋 Payload envoyé:", response.payload);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur serveur 500",
+          html: `
+            <div style="text-align: left;">
+              <p><strong>Message:</strong> ${response.error}</p>
+              <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                Veuillez contacter l'administrateur avec ces informations:<br/>
+                <code>${response.error}</code>
+              </p>
+            </div>
+          `,
+          confirmButtonText: "OK",
+        });
+      } else if (response && (response.success || response.status === 200 || response.message || response.id)) {
+        Swal.fire({
+          icon: "success",
+          text: response.message || "Avis enregistrés avec succès !",
+          confirmButtonText: "OK",
+        }).then(() => {
+          localStorage.removeItem("tempReservationData");
+          localStorage.removeItem("tempReservationId");
+          navigate("/home");
+        });
+      } else if (response && response.status === 500) {
+        console.error("❌ Erreur serveur 500:", response.error);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur serveur",
+          text: "L'API a retourné une erreur 500. Vérifiez les données envoyées.",
+          confirmButtonText: "OK",
+        });
       } else {
-        Swal.fire("Erreur", res?.message || "Impossible d'envoyer votre avis", "error");
+        throw new Error(response?.error || "Erreur inconnue");
       }
     } catch (err) {
       console.error("❌ Erreur:", err);
-      Swal.fire("Erreur", "Une erreur est survenue lors de l'envoi", "error");
+      Swal.fire({
+        icon: "error",
+        text: err instanceof Error ? err.message : "Erreur lors de l'enregistrement des avis",
+        confirmButtonText: "OK",
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  // Montre un loader en attendant que le token soit chargé
-  if (!isReady) {
+  const StarRating = ({ name, label, value, onChange, onHover }) => {
+    const hoverValue = hoverRatings[name] || value;
+
+    const getEmoji = (val) => {
+      switch (val) {
+        case 1:
+          return "😞 Très mauvais";
+        case 2:
+          return "😕 Mauvais";
+        case 3:
+          return "😐 Acceptable";
+        case 4:
+          return "😊 Bon";
+        case 5:
+          return "😍 Excellent";
+        default:
+          return "";
+      }
+    };
+
     return (
-      <div className="flex h-screen justify-center items-center bg-blue-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-white"></div>
+      <div className="mb-8">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          {label} *
+        </label>
+        <div className="flex gap-3 mb-2">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              onClick={() => onChange(star)}
+              onMouseEnter={() => onHover(star)}
+              onMouseLeave={() => onHover(0)}
+              className="transition-transform transform hover:scale-110"
+            >
+              <Star
+                size={40}
+                className={`${
+                  star <= hoverValue
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-gray-300"
+                } transition-all`}
+              />
+            </button>
+          ))}
+        </div>
+        <p className="text-sm text-gray-600">{hoverValue > 0 && getEmoji(hoverValue)}</p>
       </div>
+    );
+  };
+
+  if (!reservation && !error) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-blue-50 p-6">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
-        <div className="p-6 border-b flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Laisser un Avis</h2>
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-blue-400 via-cyan-300 to-blue-200 pt-24 pb-10 px-4">
+        <div className="max-w-3xl mx-auto">
+          {error ? (
+            <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
+              <AlertCircle className="mx-auto mb-4 text-red-500" size={64} />
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Erreur</h2>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <button
+                onClick={() => navigate("/home")}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition-all"
+              >
+                Retour au dashboard
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-2xl p-8">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                Donnez votre avis
+              </h1>
+              <p className="text-blue-600 mb-8 font-bold text-xl bg-blue-50 p-4 rounded-lg text-center">
+                Partagez votre expérience de voyage en évaluant l'hôtel et les
+                vols
+              </p>
+
+              {/* Résumé de la réservation */}
+              {reservation && (
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 mb-8 border border-blue-200">
+                  <h3 className="font-semibold text-gray-800 mb-4">
+                    Réservation #{reservation.num_reservation}
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">📍 Destination</p>
+                      <p className="font-semibold text-gray-800">
+                        {reservation.destination}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">🏨 Hôtel</p>
+                      <p className="font-semibold text-gray-800">
+                        {reservation.hotel || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">📅 Durée</p>
+                      <p className="font-semibold text-gray-800">
+                        {reservation.duree_sejour} jours
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-10">
+                {/* SECTION HÔTEL */}
+                <div className="border-b-2 border-gray-200 pb-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-green-100 p-3 rounded-lg">
+                      <Hotel className="text-green-600" size={24} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Évaluez l'hôtel
+                    </h2>
+                  </div>
+
+                  {reservation?.hotel && (
+                    <p className="text-gray-600 mb-6">
+                      {reservation.hotel} ({reservation.categorie_chambre})
+                    </p>
+                  )}
+
+                  <StarRating
+                    name="hotel"
+                    label="Note générale de l'hôtel"
+                    value={ratings.hotel.note}
+                    onChange={(note) => handleRatingChange("hotel", note)}
+                    onHover={(value) => handleHoverRating("hotel", value)}
+                  />
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Votre avis sur l'hôtel *
+                    </label>
+                    <textarea
+                      value={ratings.hotel.avis}
+                      onChange={(e) =>
+                        handleAvisChange("hotel", e.target.value)
+                      }
+                      placeholder="Décrivez votre expérience à l'hôtel..."
+                      maxLength={500}
+                      className="w-full h-24 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-green-500 focus:outline-none resize-none"
+                    />
+                    <p className="text-sm text-gray-600 mt-2">
+                      {ratings.hotel.avis.length}/500 caractères
+                    </p>
+                  </div>
+                </div>
+
+                {/* SECTION VOL ALLER */}
+                <div className="border-b-2 border-gray-200 pb-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-blue-100 p-3 rounded-lg">
+                      <Plane className="text-blue-600" size={24} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Évaluez le vol aller
+                    </h2>
+                  </div>
+
+                  <StarRating
+                    name="vol_aller"
+                    label="Note du vol aller"
+                    value={ratings.vol_aller.note}
+                    onChange={(note) => handleRatingChange("vol_aller", note)}
+                    onHover={(value) => handleHoverRating("vol_aller", value)}
+                  />
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Votre avis sur le vol aller *
+                    </label>
+                    <textarea
+                      value={ratings.vol_aller.avis}
+                      onChange={(e) =>
+                        handleAvisChange("vol_aller", e.target.value)
+                      }
+                      placeholder="Décrivez votre expérience du vol..."
+                      maxLength={500}
+                      className="w-full h-24 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
+                    />
+                    <p className="text-sm text-gray-600 mt-2">
+                      {ratings.vol_aller.avis.length}/500 caractères
+                    </p>
+                  </div>
+                </div>
+
+                {/* SECTION VOL RETOUR */}
+                <div className="pb-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-purple-100 p-3 rounded-lg">
+                      <Plane
+                        className="text-purple-600 transform rotate-180"
+                        size={24}
+                      />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      Évaluez le vol retour
+                    </h2>
+                  </div>
+
+                  <StarRating
+                    name="vol_retour"
+                    label="Note du vol retour"
+                    value={ratings.vol_retour.note}
+                    onChange={(note) => handleRatingChange("vol_retour", note)}
+                    onHover={(value) => handleHoverRating("vol_retour", value)}
+                  />
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Votre avis sur le vol retour *
+                    </label>
+                    <textarea
+                      value={ratings.vol_retour.avis}
+                      onChange={(e) =>
+                        handleAvisChange("vol_retour", e.target.value)
+                      }
+                      placeholder="Décrivez votre expérience du vol..."
+                      maxLength={500}
+                      className="w-full h-24 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none resize-none"
+                    />
+                    <p className="text-sm text-gray-600 mt-2">
+                      {ratings.vol_retour.avis.length}/500 caractères
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Boutons */}
+              <div className="flex gap-4 mt-10">
+                <button
+                  onClick={() => navigate("/home")}
+                  className="flex-1 px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg hover:bg-gray-400 transition-all"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleSubmitReview}
+                  disabled={loading}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-semibold rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50"
+                >
+                  <Send size={20} />
+                  {loading ? "Envoi..." : "Soumettre les avis"}
+                </button>
+              </div>
+
+              <p className="text-center text-gray-600 text-sm mt-6">
+                * Tous les champs sont obligatoires
+              </p>
+            </div>
+          )}
         </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Votre nom ou e-mail
-            </label>
-            <input
-              type="text"
-              value={reviewData.user}
-              onChange={(e) =>
-                setReviewData({ ...reviewData, user: e.target.value })
-              }
-              placeholder="Ex : Jean Dupont / jean@email.com"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              required
-            />
-          </div>
-
-          <ToggleSection sections={sections} onToggle={handleSectionToggle} />
-
-          {sections.hotel && (
-            <ReviewSection
-              label="l'Hôtel"
-              nameValue={reviewData.hotel}
-              onNameChange={(v) => setReviewData({ ...reviewData, hotel: v })}
-              ratingValue={reviewData.hotelRating}
-              onRatingChange={(v) => setReviewData({ ...reviewData, hotelRating: v })}
-              commentValue={reviewData.hotelComment}
-              onCommentChange={(v) => setReviewData({ ...reviewData, hotelComment: v })}
-              required
-            />
-          )}
-
-          {sections.airline && (
-            <ReviewSection
-              label="la Compagnie aérienne"
-              nameValue={reviewData.airline}
-              onNameChange={(v) => setReviewData({ ...reviewData, airline: v })}
-              ratingValue={reviewData.airlineRating}
-              onRatingChange={(v) => setReviewData({ ...reviewData, airlineRating: v })}
-              commentValue={reviewData.airlineComment}
-              onCommentChange={(v) => setReviewData({ ...reviewData, airlineComment: v })}
-              required
-            />
-          )}
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="reset"
-              onClick={() =>
-                setReviewData({
-                  user: "",
-                  hotel: "",
-                  hotelRating: 0,
-                  hotelComment: "",
-                  airline: "",
-                  airlineRating: 0,
-                  airlineComment: "",
-                })
-              }
-              className="flex-1 bg-gray-200 text-gray-800 py-2.5 rounded-lg font-semibold hover:bg-gray-300 transition"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`flex-1 ${
-                loading ? "bg-gray-400" : "bg-gradient-to-r from-blue-600 to-blue-700"
-              } text-white py-2.5 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition`}
-            >
-              {loading ? "Envoi..." : "Publier l'avis"}
-            </button>
-          </div>
-        </form>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }
+
+export default Avis;
