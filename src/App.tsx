@@ -7,10 +7,10 @@ import {
 } from "react-router-dom";
 import Accueil from "./pages/Accueil.jsx";
 import Formulaire from "./pages/Formulaire.tsx";
-import Pages from "./pages/Pages.jsx";
+import Hotels from "./pages/Hotels.jsx";
+import Airlines from "./pages/Compagnie.jsx"
 import Login from "./pages/Login.js";
 import Signin from "./pages/Signin.js";
-import ForgotPassword from "./pages/ForgotPassword.tsx";
 import AvisForm from "./pages/AvisForm.jsx";
 import { useEffect, useState } from "react";
 import { FaSpinner } from "react-icons/fa";
@@ -79,10 +79,7 @@ export default function App() {
                         path="/"
                         element={token ? <Navigate to="/home" /> : <Accueil />}
                     />
-                    <Route
-                        path="/forgot-password"
-                        element={<ForgotPassword />}
-                    />
+                   
                     <Route
                         path="/login"
                         element={
@@ -120,7 +117,8 @@ export default function App() {
                             }
                         />
                         <Route path="/formulaire" element={<Formulaire />} />
-                        <Route path="/pages/:pageType" element={<Pages />} />
+                        <Route path="/hotels" element={<Hotels />} />
+                        <Route path="/airlines" element={<Airlines />} />
                         <Route path="/avis" element={<AvisForm />} />
                     </Route>
                 </Routes>

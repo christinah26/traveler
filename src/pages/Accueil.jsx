@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";  // AJOUTÉ
+import React, { useState, useEffect } from "react";  
 import Navbar from "../Top/navbar.jsx";
 import Footer from "../Top/footer";
 import Header from "../Top/header.jsx";
@@ -7,6 +7,7 @@ import Contact from "../Section/contact.jsx";
 import FadeIn from "../components/fadeIn.jsx";
 import HotelData from "../Data/HotelData.jsx"; 
 import AirlineData from "../Data/aeroData.jsx";
+
 function Accueil() {
     
 
@@ -26,7 +27,7 @@ function Accueil() {
                             title="Hôtels Recommandés"
                             sousTitre="Les meilleurs choix pour votre séjour"
                             data={HotelData}
-                            buttonLink="/pages/hotels"
+                            buttonLink="/hotels"
                             buttonText="Voir tous les hôtels"
                             options={{
                                 showImage: true,
@@ -44,7 +45,7 @@ function Accueil() {
                             title="Nos Compagnies Aériennes"
                             sousTitre="Voyagez en toute sérénité avec nos partenaires de confiance"
                             data={AirlineData}
-                            buttonLink="/pages/compagnies"
+                            buttonLink="/airlines"
                             buttonText="Voir toutes les compagnies"
                             options={{
                                 showStars: true,

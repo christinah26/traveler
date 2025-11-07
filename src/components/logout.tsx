@@ -33,7 +33,7 @@ export default function Logout() {
     
         const logout = async () => {
             // SOLUTION TEMPORAIRE : Clear manuellement
-            localStorage.removeItem('token'); // ou sessionStorage selon ton backend
+            localStorage.removeItem('token'); 
             localStorage.removeItem('refreshToken');
           
         

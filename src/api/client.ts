@@ -14,22 +14,7 @@ export default async function clients(token: string, id_client: number) {
       }),
     });
     
-    const data = await response.json();
-
-    console.log("📦 Réponse API client complète:", data);
-    console.log("🔍 Premier objet réservation:", data?.reservations?.[0]);
-    console.log("🔑 Clés du premier objet:", Object.keys(data?.reservations?.[0] || {}));
-    
-    // Affiche CHAQUE réservation avec ses clés
-    data?.reservations?.forEach((reservation, index) => {
-      console.log(`\n📋 Réservation #${index}:`, {
-        num_reservation: reservation.num_reservation || reservation.NUM_RESERVATION,
-        destination: reservation.destination || reservation.DESTINATION,
-        hotel: reservation.hotel || reservation.HOTEL,
-        total: reservation.total || reservation.PRIX_TOTAL,
-      });
-    });
-
+    const data = await response.json()
     return data;
   } catch (err) {
     console.error(err);

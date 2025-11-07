@@ -91,7 +91,7 @@ function Dashboard() {
 
   const handleGiveReview = (reservation) => {
    
-    // Récupère le num_reservation avec fallback sur les clés en minuscules ET majuscules
+    // Récupère le num_reservation avec fallback 
     const numReservation = 
       reservation?.NUM_RESERVATION || 
       reservation?.num_reservation || 
@@ -109,7 +109,7 @@ function Dashboard() {
       return;
     }
   
-    // Normalise la réservation avec TOUS les champs possibles
+    
     const normalizedReservation = {
       ...reservation,
       // Assure que le num_reservation est correctement défini
@@ -215,7 +215,7 @@ function Dashboard() {
           </div>
         </header>
 
-        {/* STATISTIQUES */}
+        {/* total réservation */}
         <section className="max-w-7xl mx-auto mt-10 grid grid-cols-1 md:grid-cols-2 gap-6 px-6">
           <div className="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition-all">
             <div className="flex items-center justify-between mb-3">
@@ -280,7 +280,7 @@ function Dashboard() {
                           </h3>
                           <p className="text-sm text-gray-600 flex items-center gap-1">
                             <MapPin size={14} />
-                            De {paysDepart} • Réservation #{numReservation}
+                            De {paysDepart} • Réservation {numReservation}
                           </p>
                         </div>
                       </div>
@@ -299,7 +299,7 @@ function Dashboard() {
                       {/* Vol Aller */}
                       <div className="border-l-4 border-blue-500 pl-4">
                         <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                          ✈️ Vol Aller
+                           Vol Aller
                         </p>
                         <p className="text-sm font-semibold text-gray-800">
                           {compAller}
@@ -312,7 +312,7 @@ function Dashboard() {
                       {/* Vol Retour */}
                       <div className="border-l-4 border-purple-500 pl-4">
                         <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                          ✈️ Vol Retour
+                           Vol Retour
                         </p>
                         <p className="text-sm font-semibold text-gray-800">
                           {compRetour}
@@ -325,7 +325,7 @@ function Dashboard() {
                       {/* Hôtel */}
                       <div className="border-l-4 border-green-500 pl-4">
                         <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                          🏨 Hôtel
+                           Hôtel
                         </p>
                         <p className="text-sm font-semibold text-gray-800">
                           {hotelNom}

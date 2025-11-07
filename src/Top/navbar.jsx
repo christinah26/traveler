@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 // @ts-ignore
 import Logo from "../assets/traveler-nobg.png";
@@ -65,7 +65,7 @@ function Header() {
                             </li>
                             <li>
                                 <Link
-                                    to="/pages/hotels"
+                                    to="/hotels"
                                     className="hover:text-purple-600 hover:scale-110 transition-all duration-300"
                                 >
                                     Hôtels
@@ -73,7 +73,7 @@ function Header() {
                             </li>
                             <li>
                                 <Link
-                                    to="/pages/compagnies"
+                                    to="/airlines"
                                     className="hover:text-purple-600 hover:scale-110 transition-all duration-300"
                                 >
                                     Compagnies aériennes
@@ -147,14 +147,14 @@ function Header() {
                                 Accueil
                             </Link>
                             <Link
-                                to="/pages/hotels"
+                                to="/hotels"
                                 onClick={toggleMenu}
                                 className="text-lg font-bold text-blue-900"
                             >
                                 Hôtels
                             </Link>
                             <Link
-                                to="/pages/compagnies"
+                                to="/airlines"
                                 onClick={toggleMenu}
                                 className="text-lg font-bold text-blue-900"
                             >

@@ -90,7 +90,7 @@ function Avis() {
       return;
     }
 
-    // Validation
+    
     if (ratings.hotel.note === 0) {
       Swal.fire({
         icon: "warning",
@@ -189,10 +189,10 @@ function Avis() {
           `,
           confirmButtonText: "OK",
         });
-      } else if (response && (response.success || response.status === 200 || response.message || response.id)) {
+      } else if (response && (response.success || response.status === 200 ||  response.id)) {
         Swal.fire({
           icon: "success",
-          text: response.message || "Avis enregistrés avec succès !",
+          text: "Votre Avis a bien été enregistré",
           confirmButtonText: "OK",
         }).then(() => {
           localStorage.removeItem("tempReservationData");
@@ -226,15 +226,15 @@ function Avis() {
     const getEmoji = (val) => {
       switch (val) {
         case 1:
-          return "😞 Très mauvais";
+          return " Très mauvais";
         case 2:
-          return "😕 Mauvais";
+          return " Mauvais";
         case 3:
-          return "😐 Acceptable";
+          return " Acceptable";
         case 4:
-          return "😊 Bon";
+          return " Bon";
         case 5:
-          return "😍 Excellent";
+          return " Excellent";
         default:
           return "";
       }
@@ -305,30 +305,30 @@ function Avis() {
               </h1>
               <p className="text-blue-600 mb-8 font-bold text-xl bg-blue-50 p-4 rounded-lg text-center">
                 Partagez votre expérience de voyage en évaluant l'hôtel et les
-                vols
+                vols :
               </p>
 
               {/* Résumé de la réservation */}
               {reservation && (
                 <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 mb-8 border border-blue-200">
                   <h3 className="font-semibold text-gray-800 mb-4">
-                    Réservation #{reservation.num_reservation}
+                    Réservation {reservation.num_reservation}
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600">📍 Destination</p>
+                      <p className="text-gray-600"> Destination</p>
                       <p className="font-semibold text-gray-800">
                         {reservation.destination}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600">🏨 Hôtel</p>
+                      <p className="text-gray-600"> Hôtel</p>
                       <p className="font-semibold text-gray-800">
                         {reservation.hotel || "N/A"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-600">📅 Durée</p>
+                      <p className="text-gray-600"> Durée</p>
                       <p className="font-semibold text-gray-800">
                         {reservation.duree_sejour} jours
                       </p>

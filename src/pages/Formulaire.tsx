@@ -38,7 +38,7 @@ export default function Formulaire() {
     }
   };
 
-  // Récupère token + user au chargement
+  // Récupère token et user au chargement
   useEffect(() => {
     const loadAuth = async () => {
       let activeToken = contextToken || localStorage.getItem("token");
